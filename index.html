@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>웹 시리얼 통신 다중 센서 데이터 모니터</title>
+    <title>AI-STEAM 교육 By Kim Hwang</title>
     <style>
         /* Base Styles */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f7f6; color: #333; }
@@ -166,7 +166,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge@1.0.1"></script>
 </head>
 <body>
-    <h1>웹 시리얼 통신 다중 센서 데이터 모니터</h1>
+    <h1>AI-STEAM 교육 [디지털 과학실험]</h1>
 
     <div class="controls">
         <button id="connectButton">장치 연결</button>
@@ -189,13 +189,13 @@
 
     <div class="data-layout-container">
         <div class="data-table-panel panel">
-            <h2>수집 데이터</h2>
+            <h2>데이터</h2>
             <div class="table-container">
                 <table id="dataTable">
                     <thead id="dataTableHead">
                         <tr>
                             <th>순번</th>
-                            <th>수집 시각</th>
+                            <th>시각</th>
                         </tr>
                     </thead>
                     <tbody id="dataTableBody"></tbody>
@@ -205,7 +205,7 @@
 
         <div class="charts-and-stats-container">
             <div class="stats-table-panel panel">
-                <h2>센서 데이터 통계</h2>
+                <h2>통계</h2>
                 <table id="statsTable" class="stats-table">
                     <thead>
                         <tr>
@@ -225,7 +225,7 @@
             <div class="data-display-container">
                 <div class="resizable-panel" id="lineChartPanel">
                     <div class="chart-inner-panel">
-                        <h2>라인 차트</h2>
+                        <h2>라인 그래프</h2>
                         <div class="chart-container">
                             <canvas id="lineChartCanvas"></canvas>
                         </div>
@@ -234,7 +234,7 @@
         
                 <div class="resizable-panel" id="barChartPanel">
                     <div class="chart-inner-panel">
-                        <h2>막대 차트</h2>
+                        <h2>막대 그래프</h2>
                         <div class="chart-container">
                             <canvas id="barChartCanvas"></canvas>
                         </div>
@@ -243,7 +243,7 @@
         
                 <div class="resizable-panel" id="gaugeChartPanel">
                     <div class="chart-inner-panel">
-                        <h2 id="gaugeChartTitle">게이지 차트 (센서 1)</h2>
+                        <h2 id="gaugeChartTitle">게이지그래프 (센서1)</h2>
                         <div class="chart-container">
                             <canvas id="gaugeChartCanvas"></canvas>
                             <div id="gaugeLabel" class="gauge-label">0</div>
