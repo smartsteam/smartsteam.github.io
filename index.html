@@ -284,7 +284,29 @@
        .report-section .image-entry .image-entry-buttons .delete-image-button:hover {
             background-color: rgba(255, 0, 0, 1);
        }
-       /* New: 이미지 다운로드 시ㅇadding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+       /* New: 이미지 다운로드 시 버튼 숨김 */
+       .hide-for-capture {
+           display: none !important;
+       }
+
+
+       /* 컨트롤 (원래 HTML에서 가져옴) */
+       .controls { display: flex; gap: 20px; margin-bottom: 0; padding: 0; background-color: transparent; box-shadow: none; align-items: center; flex-wrap: wrap; justify-content: center; }
+       button { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.3s ease, transform 0.2s ease; }
+       button:hover { transform: translateY(-2px); }
+       #connectButton { background-color: #28a745; color: white; } /* 장치 연결 버튼 */
+       #disconnectButton { background-color: #dc3545; color: white; display: none; } /* 연결 해제 버튼 */
+       #startButton { background-color: #007bff; color: white; } /* 시작 버튼 */
+       #stopButton { background-color: #ffc107; color: #333; } /* 정지 버튼 */
+       #resetButton { background-color: #6c757d; color: white; } /* 초기화 버튼 */
+       button:disabled { background-color: #cccccc; cursor: not-allowed; } /* 비활성화된 버튼 */
+       .slider-container { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #555; }
+       /* 슬라이더 스타일 */
+       #tableRowCountSlider, #graphXAxisSlider { width: 150px; cursor: pointer; } 
+       /* 슬라이더 값 표시 스타일 */
+       #tableRowCountValue, #graphXAxisValue { min-width: 30px; text-align: right; }
+       .controls-group { display: flex; align-items: center; gap: 10px; }
+       .controls-group input[type="number"] { width: 70px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
        .controls-group label { font-weight: bold; }
        
        /* -- Main Layout Container -- (원래 HTML에서 가져옴, 대부분 .main-container로 대체) */
@@ -380,7 +402,7 @@
            <div class="panel button-area">
                <div class="controls">
                    <button id="connectButton">장치 연결</button> <button id="disconnectButton" style="display: none;">연결 해제</button> <button id="startButton" disabled>시작</button> <button id="stopButton" disabled>정지</button> <button id="resetButton" disabled>초기화</button> <div class="controls-group">
-                        <input type="checkbox" id="manualScaleToggle"> <label for="manualScaleToggle">Y축 수동 설정</label>
+                       <input type="checkbox" id="manualScaleToggle"> <label for="manualScaleToggle">Y축 수동 설정</label>
                        <div id="manualScaleInputs" style="display: none;"> 최소: <input type="number" id="yMinInput" value="0">
                            최대: <input type="number" id="yMaxInput" value="1024">
                        </div>
@@ -388,31 +410,12 @@
                </div>
            </div>
 
-           <div class="panel data-collection-table-area">
-               <div class="slider-container">
-                   <h4>데이터 현황</h4>
-                   &nbsp;&nbsp;&nbsp; 표시 행: <span id="tableRowCountValue">5</span> <input type="range" id="tableRowCountSlider" min="0" max="50" step="1" value="5">
-               </div>
-               <div class="table-container">
-                   <table id="dataTable">
-                       <thead id="dataTableHead">
-                           <tr>
-                               <th>순번</th>
-                               <th>시각</th>
-                           </tr>
-                       </thead>
-                       <tbody id="dataTableBody"></tbody>
-                   </table>
-               </div>
-           </div>
-
-          
            <div class="panel line-graph-area">
                <div class="slider-container">
                    <h4>데이터 그래프 </h4>
                    &nbsp;&nbsp;&nbsp; X축 표시: <span id="graphXAxisValue">20</span> <input type="range" id="graphXAxisSlider" min="1" max="100" step="1" value="20"> &nbsp;&nbsp;&nbsp;<button id="sendLineGraphToReport">보고서 삽입</button> </div>
-              <div class="chart-container">
-                  <canvas id="lineChartCanvas"></canvas> </div>
+               <div class="chart-container">
+                   <canvas id="lineChartCanvas"></canvas> </div>
            </div>
 
        <div class="panel data-two-area">
@@ -451,11 +454,27 @@
 
 
 
-
+           <div class="panel data-collection-table-area">
+               <div class="slider-container">
+                   <h4>데이터 현황</h4>
+                   &nbsp;&nbsp;&nbsp; 표시 행: <span id="tableRowCountValue">5</span> <input type="range" id="tableRowCountSlider" min="0" max="50" step="1" value="5">
+               </div>
+               <div class="table-container">
+                   <table id="dataTable">
+                       <thead id="dataTableHead">
+                           <tr>
+                               <th>순번</th>
+                               <th>시각</th>
+                           </tr>
+                       </thead>
+                       <tbody id="dataTableBody"></tbody>
+                   </table>
+               </div>
+           </div>
        </div>
 
        <div class="report-writing-section" id="reportWritingSection">
-           <h2>실험보고서 &nbsp;&nbsp;&nbsp; <button id="saveReportButton">보고서 저장</button></h2> <div class="report-section">
+           <h2>실험보고서 &nbsp;&nbsp;&nbsp; <button id="saveReportButton">보고서 이미지 다운로드</button></h2> <div class="report-section">
                <h3>1. 제목</h3>
                <div contenteditable="true" class="input-area">입력 영역</div>
            </div>
