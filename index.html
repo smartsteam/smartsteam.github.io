@@ -402,10 +402,7 @@
            <div class="panel button-area">
                <div class="controls">
                    <button id="connectButton">장치 연결</button> <button id="disconnectButton" style="display: none;">연결 해제</button> <button id="startButton" disabled>시작</button> <button id="stopButton" disabled>정지</button> <button id="resetButton" disabled>초기화</button> <div class="controls-group">
-                       <input type="checkbox" id="manualScaleToggle"> <label for="manualScaleToggle">Y축 수동 설정</label>
-                       <div id="manualScaleInputs" style="display: none;"> 최소: <input type="number" id="yMinInput" value="0">
-                           최대: <input type="number" id="yMaxInput" value="1024">
-                       </div>
+
                    </div>
                </div>
            </div>
@@ -433,8 +430,13 @@
                <div class="slider-container">
                    <h4>데이터 그래프 </h4>
                    &nbsp;&nbsp;&nbsp; X축 표시: <span id="graphXAxisValue">20</span> <input type="range" id="graphXAxisSlider" min="1" max="100" step="1" value="20"> &nbsp;&nbsp;&nbsp;<button id="sendLineGraphToReport">보고서 삽입</button> </div>
-               <div class="chart-container">
-                   <canvas id="lineChartCanvas"></canvas> </div>
+                       <input type="checkbox" id="manualScaleToggle"> <label for="manualScaleToggle">Y축 수동 설정</label>
+                       <div id="manualScaleInputs" style="display: none;"> 최소: <input type="number" id="yMinInput" value="0">
+                           최대: <input type="number" id="yMaxInput" value="1024">
+                       </div>
+              <div class="chart-container">
+
+                  <canvas id="lineChartCanvas"></canvas> </div>
            </div>
 
        <div class="panel data-two-area">
