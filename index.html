@@ -284,6 +284,10 @@
        .report-section .image-entry .image-entry-buttons .delete-image-button:hover {
             background-color: rgba(255, 0, 0, 1);
        }
+       /* New: 이미지 다운로드 시 버튼 숨김 */
+       .hide-for-capture {
+           display: none !important;
+       }
 
 
        /* 컨트롤 (원래 HTML에서 가져옴) */
@@ -1126,7 +1130,7 @@
            buttonContainer.appendChild(moveUpButton);
 
            // 아래로 이동 버튼 생성
-           const moveDownButton = document.createElement('button');
+           const moveDownButton = document.createElement('button'); // <-- 이 줄이 수정되었습니다.
            moveDownButton.classList.add('move-down-button');
            moveDownButton.textContent = '▼';
            moveDownButton.title = '아래로 이동';
@@ -1205,7 +1209,7 @@
                    buttonContainer.appendChild(moveUpButton);
 
                    // 아래로 이동 버튼 생성
-                   const moveDownButton = document.createElement('button');
+                   const moveDownButton = document.createElement('button'); // <-- 이 줄이 수정되었습니다.
                    moveDownButton.classList.add('move-down-button');
                    moveDownButton.textContent = '▼';
                    moveDownButton.title = '아래로 이동';
@@ -1326,6 +1330,10 @@
 
        // "보고서 이미지 다운로드" (이전 "보고서 저장" 버튼 기능 대체)
        saveReportButton.addEventListener('click', () => {
+           const buttonsToHide = reportWritingSection.querySelectorAll('.image-entry-buttons');
+           // Hide buttons
+           buttonsToHide.forEach(btn => btn.classList.add('hide-for-capture'));
+
            // html2canvas를 사용하여 reportWritingSection 요소를 캡처
            html2canvas(reportWritingSection, {
                scale: 2, // 고해상도 이미지 생성을 위해 스케일 조정 (선택 사항)
@@ -1345,6 +1353,9 @@
            }).catch(error => {
                console.error('보고서 이미지를 생성하는 데 실패했습니다:', error);
                alert('보고서 이미지를 다운로드하는 데 실패했습니다. 다시 시도해주세요.');
+           }).finally(() => {
+               // Show buttons again, regardless of success or failure
+               buttonsToHide.forEach(btn => btn.classList.remove('hide-for-capture'));
            });
        });
 
