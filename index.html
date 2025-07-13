@@ -410,6 +410,25 @@
                </div>
            </div>
 
+           <div class="panel data-collection-table-area">
+               <div class="slider-container">
+                   <h4>데이터 현황</h4>
+                   &nbsp;&nbsp;&nbsp; 표시 행: <span id="tableRowCountValue">5</span> <input type="range" id="tableRowCountSlider" min="0" max="50" step="1" value="5">
+               </div>
+               <div class="table-container">
+                   <table id="dataTable">
+                       <thead id="dataTableHead">
+                           <tr>
+                               <th>순번</th>
+                               <th>시각</th>
+                           </tr>
+                       </thead>
+                       <tbody id="dataTableBody"></tbody>
+                   </table>
+               </div>
+           </div>
+
+          
            <div class="panel line-graph-area">
                <div class="slider-container">
                    <h4>데이터 그래프 </h4>
@@ -454,23 +473,7 @@
 
 
 
-           <div class="panel data-collection-table-area">
-               <div class="slider-container">
-                   <h4>데이터 현황</h4>
-                   &nbsp;&nbsp;&nbsp; 표시 행: <span id="tableRowCountValue">5</span> <input type="range" id="tableRowCountSlider" min="0" max="50" step="1" value="5">
-               </div>
-               <div class="table-container">
-                   <table id="dataTable">
-                       <thead id="dataTableHead">
-                           <tr>
-                               <th>순번</th>
-                               <th>시각</th>
-                           </tr>
-                       </thead>
-                       <tbody id="dataTableBody"></tbody>
-                   </table>
-               </div>
-           </div>
+
        </div>
 
        <div class="report-writing-section" id="reportWritingSection">
