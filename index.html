@@ -6,109 +6,10 @@
    <title>AI-STEAM 교육 실험 보고서</title>
    <style>
        /* 기본 스타일 */
-       body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f7f6; color: #333; margin: 0; }
+       body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; background-color: #f4f7f6; color: #333; }
        h1 { color: #2c3e50; margin-bottom: 30px; }
        
-       /* 탭 컨테이너 스타일 - 이미지와 유사하게 변경 */
-       .tab-container {
-           width: 100%;
-           /* 배경 그라디언트 및 그림자 - 이미지와 유사하게 조정 */
-           background: linear-gradient(to bottom, #dcdcdc, #bebebe); /* 밝은 회색에서 어두운 회색으로 그라디언트 */
-           border-bottom: 1px solid #a0a0a0; /* 하단 경계선 */
-           box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* 부드러운 그림자 */
-           display: flex;
-           justify-content: flex-start;
-           align-items: flex-end; /* 탭 버튼이 아래쪽으로 정렬되도록 변경 */
-           padding: 0 10px; /* 좌우 패딩 */
-           height: 45px; /* 탭바 높이 조정 */
-           position: relative; /* 자식 요소의 absolute 포지셔닝을 위해 */
-       }
-
-       /* 탭 버튼 스타일 - 이미지와 유사하게 변경 */
-       .tab-button {
-           background-color: #e0e0e0; /* 비활성 탭 배경색 (약간 어두운 회색) */
-           color: #555; /* 비활성 탭 텍스트 색상 */
-           padding: 8px 18px; /* 패딩 조정 */
-           border: 1px solid #a0a0a0; /* 테두리 */
-           border-bottom: none; /* 하단 테두리 제거 */
-           border-radius: 6px 6px 0 0; /* 상단 둥근 모서리 */
-           cursor: pointer;
-           font-size: 14px; /* 폰트 크기 조정 */
-           font-weight: bold; /* 폰트 굵기 */
-           transition: all 0.2s ease; /* 부드러운 전환 효과 */
-           margin-right: 2px; /* 탭 사이 간격 줄임 */
-           text-decoration: none;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           height: 35px; /* 탭 높이 */
-           box-sizing: border-box;
-           position: relative;
-           top: 1px; /* 컨테이너 바닥에 살짝 띄우기 */
-       }
-
-       .tab-button:hover {
-           background-color: #f0f0f0; /* 호버 시 약간 밝아짐 */
-           color: #333;
-       }
-
-       .tab-button.active {
-           background-color: #ffffff; /* 활성 탭 배경색 (흰색) */
-           color: #333; /* 활성 탭 텍스트 색상 */
-           border-color: #a0a0a0; /* 활성 탭 테두리색 */
-           border-bottom-color: #ffffff; /* 활성 탭 하단 테두리를 배경색과 동일하게 만들어 합쳐진 느낌 */
-           cursor: default;
-           height: 36px; /* 활성 탭이 살짝 더 커 보이도록 */
-           top: 0px; /* 활성 탭을 컨테이너 바닥에 딱 붙이도록 조정 */
-           box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* 활성 탭 상단에 미세한 그림자 */
-           z-index: 1; /* 활성 탭을 위로 올림 */
-       }
-
-       /* "+" 버튼 스타일 */
-       .add-tab-button {
-           background-color: #e0e0e0; /* 비활성 탭과 유사한 배경 */
-           color: #555; /* 비활성 탭과 유사한 텍스트 색상 */
-           padding: 0; /* 패딩 제거 */
-           width: 35px; /* 너비 */
-           height: 35px; /* 높이 */
-           border: 1px solid #a0a0a0;
-           border-bottom: none;
-           border-radius: 6px 6px 0 0;
-           cursor: pointer;
-           font-size: 20px; /* "+" 아이콘 크기 */
-           font-weight: bold;
-           transition: background-color 0.2s ease;
-           margin-left: 5px; /* 탭과의 간격 */
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           position: relative;
-           top: 1px; /* 탭 버튼과 높이 맞춤 */
-       }
-
-       .add-tab-button:hover {
-           background-color: #f0f0f0;
-           color: #333;
-       }
-
-
-       /* 탭 콘텐츠 스타일 */
-       .tab-content {
-           display: none; /* Hide all tab content by default */
-           width: 100%;
-           flex-grow: 1; /* Allow content to take available space */
-           padding-top: 20px; /* 탭 아래 콘텐츠와의 간격 */
-           /* Removed fixed height, let it adapt */
-       }
-
-       .tab-content.active {
-           display: flex; /* Show active tab content, keep flex for main-container */
-           flex-direction: column; /* Ensure child elements stack correctly */
-           align-items: center; /* Center content horizontally */
-       }
-       
-       /* Existing styles below... */
-       /* 기존 Main Layout 컨테이너: 실험 결과와 보고서 작성 영역을 포함 */
+       /* 주요 레이아웃 컨테이너: 실험 결과와 보고서 작성 영역을 포함 */
        .main-container {
            display: flex;
            gap: 20px;
@@ -492,159 +393,124 @@
    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <div class="tab-container">
-        <a href="#home" class="tab-button active" data-tab="home">Home</a>
-        <a href="#block-coding" class="tab-button" data-tab="block-coding">블록코딩</a>
-        <a href="#data-analysis" class="tab-button" data-tab="data-analysis">데이터분석</a>
-        <a href="#report" class="tab-button" data-tab="report">Report</a>
-        <a href="#ai-science-lab" class="tab-button" data-tab="ai-science-lab">지능형과학실</a>
-        <button class="add-tab-button" onclick="addNewTab()">+</button>
-    </div>
+   <h1>AI-STEAM 교육 실험 보고서</h1>
 
-    <div id="home" class="tab-content active">
-        <h1>Welcome to the Home Tab</h1>
-        <p>This is a placeholder for the Home tab content.</p>
-    </div>
+   <div class="main-container">
+       <div class="science-experiment-section">
+           <h2>이지메이커 데이터 대시보드</h2>
 
-    <div id="block-coding" class="tab-content">
-        <h1>Welcome to the Block Coding Tab</h1>
-        <p>This is a placeholder for the Block Coding tab content.</p>
-    </div>
-
-    <div id="data-analysis" class="tab-content">
-        <h1>Welcome to the Data Analysis Tab</h1>
-        <p>This is a placeholder for the Data Analysis tab content.</p>
-    </div>
-
-    <div id="report" class="tab-content">
-        <h1>AI-STEAM 교육 실험 보고서</h1>
-        <div class="main-container">
-            <div class="science-experiment-section">
-                <h2>이지메이커 데이터 대시보드</h2>
-
-                <div class="panel button-area">
-                    <div class="controls">
-                        <button id="connectButton">장치 연결</button> <button id="disconnectButton" style="display: none;">연결 해제</button> <button id="startButton" disabled>시작</button> <button id="stopButton" disabled>정지</button> <button id="resetButton" disabled>초기화</button> <div class="controls-group">
-                            <input type="checkbox" id="manualScaleToggle"> <label for="manualScaleToggle">Y축 수동 설정</label>
-                            <div id="manualScaleInputs" style="display: none;"> 최소: <input type="number" id="yMinInput" value="0">
-                                최대: <input type="number" id="yMaxInput" value="1024">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+           <div class="panel button-area">
+               <div class="controls">
+                   <button id="connectButton">장치 연결</button> <button id="disconnectButton" style="display: none;">연결 해제</button> <button id="startButton" disabled>시작</button> <button id="stopButton" disabled>정지</button> <button id="resetButton" disabled>초기화</button> <div class="controls-group">
+                       <input type="checkbox" id="manualScaleToggle"> <label for="manualScaleToggle">Y축 수동 설정</label>
+                       <div id="manualScaleInputs" style="display: none;"> 최소: <input type="number" id="yMinInput" value="0">
+                           최대: <input type="number" id="yMaxInput" value="1024">
+                       </div>
+                   </div>
+               </div>
+           </div>
 
 
-                <div class="panel data-collection-table-area">
-                    <div class="slider-container">
-                        <h4>데이터 현황</h4>
-                        &nbsp;&nbsp;&nbsp; 표시 행: <span id="tableRowCountValue">5</span> <input type="range" id="tableRowCountSlider" min="0" max="50" step="1" value="5">
-                    </div>
-                    <div class="table-container">
-                        <table id="dataTable">
-                            <thead id="dataTableHead">
-                                <tr>
-                                    <th>순번</th>
-                                    <th>시각</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dataTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+           <div class="panel data-collection-table-area">
+               <div class="slider-container">
+                   <h4>데이터 현황</h4>
+                   &nbsp;&nbsp;&nbsp; 표시 행: <span id="tableRowCountValue">5</span> <input type="range" id="tableRowCountSlider" min="0" max="50" step="1" value="5">
+               </div>
+               <div class="table-container">
+                   <table id="dataTable">
+                       <thead id="dataTableHead">
+                           <tr>
+                               <th>순번</th>
+                               <th>시각</th>
+                           </tr>
+                       </thead>
+                       <tbody id="dataTableBody"></tbody>
+                   </table>
+               </div>
+           </div>
 
 
-                <div class="panel line-graph-area">
-                    <div class="slider-container">
-                        <h4>데이터 그래프 </h4>
-                        &nbsp;&nbsp;&nbsp; X축 표시: <span id="graphXAxisValue">20</span> <input type="range" id="graphXAxisSlider" min="1" max="100" step="1" value="20"> &nbsp;&nbsp;&nbsp;<button id="sendLineGraphToReport">보고서 삽입</button> </div>
-                    <div class="chart-container">
-                        <canvas id="lineChartCanvas"></canvas> </div>
-                </div>
+           <div class="panel line-graph-area">
+               <div class="slider-container">
+                   <h4>데이터 그래프 </h4>
+                   &nbsp;&nbsp;&nbsp; X축 표시: <span id="graphXAxisValue">20</span> <input type="range" id="graphXAxisSlider" min="1" max="100" step="1" value="20"> &nbsp;&nbsp;&nbsp;<button id="sendLineGraphToReport">보고서 삽입</button> </div>
+               <div class="chart-container">
+                   <canvas id="lineChartCanvas"></canvas> </div>
+           </div>
 
-            <div class="panel data-two-area">
-                    <div style="display: flex; justify-content: space-around; margin-top: 1px; flex-wrap: wrap; gap: 10px; height: 300px;">
-                        <div style="flex: 1; min-width: 200px; height: 80%; border: 1px solid #eee; border-radius: 8px; background-color: #fff; padding: 10px; box-sizing: border-box;">
-                            <h4>최근 데이터&nbsp;&nbsp;&nbsp; <button id="sendBarGraphToReport">보고서 삽입</button></h4> 
-                        <div class="chart-container">
-                                <canvas id="barChartCanvas"></canvas>
-                            </div>
-                        </div>
-                        <div style="flex: 1; min-width: 200px; height: 80%; border: 1px solid #eee; border-radius: 8px; background-color: #fff; padding: 10px; box-sizing: border-box;">
-                            <h4 id="gaugeChartTitle">(센서1) &nbsp;&nbsp;&nbsp; <button id="sendGaugeChartToReport">보고서 삽입</button></h4>
-                            <div class="chart-container">
-                                <canvas id="gaugeChartCanvas"></canvas>
-                                <div id="gaugeLabel" class="gauge-label">0</div> </div>
-                        </div>
-                    </div>
-                </div>
+       <div class="panel data-two-area">
+               <div style="display: flex; justify-content: space-around; margin-top: 1px; flex-wrap: wrap; gap: 10px; height: 300px;">
+                   <div style="flex: 1; min-width: 200px; height: 80%; border: 1px solid #eee; border-radius: 8px; background-color: #fff; padding: 10px; box-sizing: border-box;">
+                       <h4>최근 데이터&nbsp;&nbsp;&nbsp; <button id="sendBarGraphToReport">보고서 삽입</button></h4> 
+   		<div class="chart-container">
+                           <canvas id="barChartCanvas"></canvas>
+                       </div>
+                   </div>
+                   <div style="flex: 1; min-width: 200px; height: 80%; border: 1px solid #eee; border-radius: 8px; background-color: #fff; padding: 10px; box-sizing: border-box;">
+                       <h4 id="gaugeChartTitle">(센서1) &nbsp;&nbsp;&nbsp; <button id="sendGaugeChartToReport">보고서 삽입</button></h4>
+   		    <div class="chart-container">
+                           <canvas id="gaugeChartCanvas"></canvas>
+                           <div id="gaugeLabel" class="gauge-label">0</div> </div>
+                   </div>
+               </div>
+           </div>
 
-                <div class="panel data-stats-area">
-                    <table id="statsTable" class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>항목</th>
-                                <th>수집 갯수</th>
-                                <th>최근</th>
-                                <th>평균</th>
-                                <th>최대</th>
-                                <th>최소</th>
-                            </tr>
-                        </thead>
-                        <tbody id="statsTableBody">
-                        </tbody>
-                    </table>
-                </div>
+           <div class="panel data-stats-area">
+               <table id="statsTable" class="stats-table">
+                   <thead>
+                       <tr>
+                           <th>항목</th>
+                           <th>수집 갯수</th>
+                           <th>최근</th>
+                           <th>평균</th>
+                           <th>최대</th>
+                           <th>최소</th>
+                       </tr>
+                   </thead>
+                   <tbody id="statsTableBody">
+                   </tbody>
+               </table>
+   	</div>
 
 
 
 
-            </div>
+       </div>
 
-            <div class="report-writing-section" id="reportWritingSection">
-                <h2>실험보고서 &nbsp;&nbsp;&nbsp; <button id="saveReportButton">보고서 저쟝</button></h2> <div class="report-section">
-                    <h3>1. 제목</h3>
-                    <div contenteditable="true" class="input-area">입력 영역</div>
-                </div>
+       <div class="report-writing-section" id="reportWritingSection">
+ 
+          <h2>실험보고서 &nbsp;&nbsp;&nbsp; <button id="saveReportButton">보고서 저쟝</button></h2> 
 
-                <div class="report-section">
-                    <h3>2. 준비물</h3>
-                    <div contenteditable="true" class="text-input-area">텍스트 입력 영역</div>
-                </div>
+		<img src="sc01_01.png"  style="max-width:100%; height:auto; display:block; margin-bottom: 10px;">
+		<img src="sc01_02.png"  style="max-width:100%; height:auto; display:block; margin-bottom: 10px;">
+		<img src="sc01_03.png"  style="max-width:100%; height:auto; display:block; margin-bottom: 10px;">
 
-                <div class="report-section">
-                    <h3>3. 내용 (설계/과정/방법 등)</h3>
-                    <div contenteditable="true" class="text-input-area">텍스트 입력 영역</div>
-                </div>
+           <div class="report-section">
+               <h3>실제 실험 모습 (사진 등)</h3>
+               <div class="image-input-area" id="experimentImageArea">
+                   <button id="insertLocalImageButton">이미지 삽입</button> <input type="file" id="localImageInput" accept="image/*" style="display: none;"> </div>
+           </div>
 
-                <div class="report-section">
-                    <h3>4. 실험 모습</h3>
-                    <div class="image-input-area" id="experimentImageArea">
-                        <button id="insertLocalImageButton">이미지 삽입</button> <input type="file" id="localImageInput" accept="image/*" style="display: none;"> </div>
-                </div>
+           <div class="report-section">
+               <h3>실험 데이터 및 그래프</h3>
+               <div class="image-input-area" id="experimentResultGraphArea">
+                   </div>
+           </div>
 
-                <div class="report-section">
-                    <h3>5. 실험 결과</h3>
-                    <div class="image-input-area" id="experimentResultGraphArea">
-                        </div>
-                </div>
+           <div class="report-section">
+               <h3>실험 결과 해석</h3>
+               <div contenteditable="true" class="text-input-area">텍스트 입력 영역</div>
+           </div>
 
-                <div class="report-section">
-                    <h3>6. 실험 결과</h3>
-                    <div contenteditable="true" class="text-input-area">텍스트 입력 영역</div>
-                </div>
+           <div class="report-section">
+               <h3>알게 된 사실 및 결론</h3>
+               <div contenteditable="true" class="text-input-area">텍스트 입력 영역</div>
+           </div>
 
-                <div class="report-section">
-                    <h3>7. 알게 된 사실 및 결론</h3>
-                    <div contenteditable="true" class="text-input-area">텍스트 입력 영역</div>
-                </div>
-            </div>
-        </div>
-    </div>
+		<img src="sc01_04.png"  style="max-width:100%; height:auto; display:block; margin-bottom: 10px;">
 
-    <div id="ai-science-lab" class="tab-content">
-        <h1>Welcome to the AI Science Lab Tab</h1>
-        <p>This is a placeholder for the AI Science Lab tab content.</p>
-    </div>
+       </div>
+   </div>
    
    <script>
        // DOM 요소들을 JavaScript 변수에 할당
@@ -854,10 +720,10 @@
                        <td id="stats-min-${i}">---</td>
                    `;
                });
-               sensorCount = count;
-
-               // 계산을 위한 sensorData 배열 초기화
-               sensorData = Array.from({ length: sensorCount }, () => []);
+               sensorCount = count; // 계산을 위한 sensorData 배열 초기화
+               sensorData = Array.from({
+                   length: sensorCount
+               }, () => []);
            }
        }
 
@@ -865,6 +731,7 @@
        function handleSensorNameEdit(event) {
            const index = parseInt(event.target.dataset.sensorIndex);
            const newName = event.target.textContent.trim();
+
            if (newName && sensorNames[index] !== newName) {
                sensorNames[index] = newName;
                console.log(`Sensor ${index + 1} name changed to: ${newName}`);
@@ -890,7 +757,6 @@
                lineChart.update();
                barChart.update();
                gaugeChart.update(); // 제목 변경 반영을 위해 게이지 차트 업데이트 (데이터와 직접 관련 없지만)
-
            } else if (!newName) {
                // 사용자가 이름을 지우면 기본값으로 되돌림
                event.target.textContent = sensorNames[index];
@@ -924,6 +790,7 @@
            gaugeChart.update('none'); // 애니메이션 없이 업데이트
        }
 
+
        // 통계 데이터 계산 및 업데이트 함수
        function updateStatsTable(dataValues) {
            dataValues.forEach((value, index) => {
@@ -954,6 +821,7 @@
        tableRowCountSlider.addEventListener('input', (event) => {
            tableRowLimit = parseInt(event.target.value);
            tableRowCountValue.textContent = tableRowLimit;
+
            if (tableRowLimit === 0) {
                dataTableBody.innerHTML = ''; // 테이블 내용 모두 지움
            } else {
@@ -968,518 +836,432 @@
            graphDataLimit = parseInt(event.target.value);
            graphXAxisValue.textContent = graphDataLimit;
 
-           // 슬라이더 변경 시 차트 데이터 즉시 잘라내기
-           if (graphDataLimit === 0) {
-               // 0일 경우 모든 데이터 지움 (X축 라벨도)
-               lineChart.data.labels = [];
-               lineChart.data.datasets.forEach(dataset => dataset.data = []);
-           } else {
-               while (lineChart.data.labels.length > graphDataLimit) {
-                   lineChart.data.labels.shift(); // 첫 번째 라벨 제거
-                   lineChart.data.datasets.forEach(dataset => dataset.data.shift()); // 각 데이터셋의 첫 번째 데이터 제거
-               }
-           }
-           lineChart.update('none');
+           // 라인 차트 데이터셋 길이 조절
+           lineChart.data.labels = lineChart.data.labels.slice(-graphDataLimit);
+           lineChart.data.datasets.forEach(dataset => {
+               dataset.data = dataset.data.slice(-graphDataLimit);
+           });
+           lineChart.update('none'); // 애니메이션 없이 업데이트
        });
 
-       // Y축 수동 설정 토글 이벤트 리스너
+
+       // 수동 Y축 스케일 토글 이벤트
        manualScaleToggle.addEventListener('change', () => {
            manualScaleInputs.style.display = manualScaleToggle.checked ? 'flex' : 'none';
            applyChartScaleSettings();
        });
 
-       // Y축 수동 설정 입력 필드 이벤트 리스너
-       yMinInput.addEventListener('input', applyChartScaleSettings);
-       yMaxInput.addEventListener('input', applyChartScaleSettings);
+       // 수동 Y축 입력 필드 변경 이벤트
+       yMinInput.addEventListener('change', applyChartScaleSettings);
+       yMaxInput.addEventListener('change', applyChartScaleSettings);
 
-       // "장치 연결" 버튼 클릭 이벤트
+
+       // 장치 연결 버튼 클릭 이벤트
        connectButton.addEventListener('click', async () => {
            try {
-               port = await navigator.serial.requestPort(); // 시리얼 포트 요청
-               const fixedBaudRate = 115200; // 고정된 보드레이트
-               await port.open({ baudRate: fixedBaudRate }); // 포트 열기
+               // 시리얼 포트 선택 요청
+               port = await navigator.serial.requestPort();
+               await port.open({
+                   baudRate: 9600
+               }); // 9600 보율로 포트 열기
 
-               connectButton.style.display = 'none';
-               disconnectButton.style.display = 'inline-block';
-               startButton.disabled = false;
-               stopButton.disabled = true;
-               resetButton.disabled = true; // 초기화 버튼 비활성화
-               console.log('시리얼 포트 연결됨:', port);
+               connectButton.style.display = 'none'; // 연결 버튼 숨기기
+               disconnectButton.style.display = 'inline-block'; // 연결 해제 버튼 보이기
+               startButton.disabled = false; // 시작 버튼 활성화
+               resetButton.disabled = false; // 초기화 버튼 활성화 (New: 초기화 버튼도 활성화)
+               console.log('Serial port connected.');
+
+               // 데이터를 지속적으로 읽기 시작
+               reading = true;
+               readLoop();
 
            } catch (error) {
                console.error('시리얼 포트 연결 실패:', error);
-               alert('시리얼 포트 연결에 실패했습니다. 오류: ' + error.message);
+               alert('시리얼 포트 연결에 실패했습니다. 장치가 올바르게 연결되어 있는지 확인해주세요.');
            }
        });
 
-       // "연결 해제" 버튼 클릭 이벤트
+       // 연결 해제 버튼 클릭 이벤트
        disconnectButton.addEventListener('click', async () => {
+           if (reader) {
+               await reader.cancel(); // 읽기 작업 취소
+           }
            if (port) {
-               if (reading) {
-                   reading = false;
-                   if (reader) {
-                       await reader.cancel(); // 현재 읽기 작업 취소
-                   }
-               }
+               await port.close(); // 포트 닫기
+           }
+
+           reading = false;
+           connectButton.style.display = 'inline-block'; // 연결 버튼 보이기
+           disconnectButton.style.display = 'none'; // 연결 해제 버튼 숨기기
+           startButton.disabled = true; // 시작 버튼 비활성화
+           stopButton.disabled = true; // 정지 버튼 비활성화
+           resetButton.disabled = true; // 초기화 버튼 비활성화
+           console.log('Serial port disconnected.');
+       });
+
+
+       // 데이터 읽기 루프
+       async function readLoop() {
+           while (port.readable && reading) {
+               reader = port.readable.getReader();
                try {
-                   await port.close();
-                   console.log('시리얼 포트 연결 해제됨.');
-               } catch (error) {
-                   console.error('시리얼 포트 연결 해제 실패:', error);
-               } finally {
-                   connectButton.style.display = 'inline-block';
-                   disconnectButton.style.display = 'none';
-                   startButton.disabled = true;
-                   stopButton.disabled = true;
-                   resetButton.disabled = false; // 연결 해제 후 초기화는 가능하게
-                   port = null;
-                   reader = null;
-               }
-           }
-       });
-
-       // "시작" 버튼 클릭 이벤트
-       startButton.addEventListener('click', () => {
-           if (port) {
-               startReading();
-               startButton.disabled = true;
-               stopButton.disabled = false;
-               resetButton.disabled = false;
-           } else {
-               alert('먼저 장치를 연결하세요!');
-           }
-       });
-
-       // "정지" 버튼 클릭 이벤트
-       stopButton.addEventListener('click', async () => {
-           // 이 함수는 이제 읽기 루프만 일시 중지하고 포트는 열린 상태로 유지합니다.
-           if (reading) {
-               reading = false; // 잠금 해제하지 않고 read() 호출만 취소
-               if (reader) {
-                   await reader.cancel();
-               }
-           }
-           console.log('데이터 수집 정지 요청됨.');
-           startButton.disabled = false;
-           stopButton.disabled = true;
-       });
-
-       // New: "초기화" 버튼 클릭 이벤트
-       resetButton.addEventListener('click', async () => {
-           // 1. 데이터 수신 정지
-           if (reading) {
-               reading = false;
-               if (reader) {
-                   await reader.cancel();
-               }
-           }
-           console.log('데이터 수집 정지 및 초기화 진행.');
-
-           // 2. 테이블 데이터 지우기
-           dataTableBody.innerHTML = ''; // 테이블 본문 비우기
-           statsTableBody.innerHTML = ''; // 통계 테이블 본문 비우기
-
-           // 3. 차트 내용 지우기 및 초기화
-           initCharts(); // 모든 차트 재초기화
-           gaugeLabel.textContent = '0'; // 게이지 라벨 초기화
-           gaugeChartTitle.textContent = `게이지 차트 (센서 1)`; // 게이지 차트 제목 초기화
-
-           // 4. 변수 초기화
-           sequenceNumber = 1;
-           sensorCount = 0;
-           sensorData = [];
-           sensorNames = [];
-           // 테이블 헤더도 초기 센서 개수(0)에 맞게 재설정
-           updateTableHeader(0);
-
-           // 슬라이더 값도 초기값으로 재설정 (UI와 논리 동기화)
-           tableRowCountSlider.value = 5;
-           tableRowCountValue.textContent = 5;
-           tableRowLimit = 5;
-           graphXAxisSlider.value = 20;
-           graphXAxisValue.textContent = 20;
-           graphDataLimit = 20;
-
-           // 5. 버튼 상태 업데이트
-           startButton.disabled = false;
-           stopButton.disabled = true;
-           resetButton.disabled = true; // 초기화 후 다시 비활성화
-           console.log('모든 데이터 및 그래프가 초기화되었습니다.');
-       });
-
-
-       // 데이터 수집 시작 함수
-       async function startReading() {
-           if (!port || reading) return; // 포트가 없거나 이미 읽기 중이면 반환
-
-           reading = true;
-           if (!reader) {
-               reader = port.readable.getReader(); // 리더 가져오기
-           }
-           console.log('데이터 수집 시작...');
-
-           let buffer = '';
-           try {
-               while (reading) {
-                   const { value, done } = await reader.read(); // 데이터 읽기
-                   if (done) break;
-
-                   buffer += new TextDecoder().decode(value); // 버퍼에 데이터 추가
-                   const lines = buffer.split('\n'); // 줄 단위로 분리
-
-                   buffer = lines.pop(); // 마지막 불완전한 줄은 버퍼에 다시 저장
-
-                   lines.forEach(line => {
-                       if (line.trim() !== '') {
-                           // console.log('Received:', line); // 수신된 데이터 확인
-                           updateTableAndCharts(line.trim()); // 테이블과 차트 업데이트
+                   while (true) {
+                       const {
+                           value,
+                           done
+                       } = await reader.read();
+                       if (done) {
+                           // Reader has been canceled.
+                           break;
                        }
-                   });
-               }
-           } catch (error) {
-               console.error('데이터 읽기 오류:', error);
-               alert('데이터 읽기 중 오류가 발생했습니다: ' + error.message);
-               reading = false;
-               startButton.disabled = false; // Enable start button on error
-               stopButton.disabled = true; // Disable stop button on error
-               resetButton.disabled = false; // Keep reset enabled on error
-           } finally {
-               // reader는 포트가 닫히거나 오류가 발생할 때만 해제됩니다.
-               // 사용자가 일시 중지한 경우 잠금은 유지됩니다.
-               if (!reading && reader) {
+                       const textDecoder = new TextDecoder();
+                       const lines = textDecoder.decode(value).split('\n'); // 라인별로 분리
+                       lines.forEach(line => {
+                           if (line.trim().length > 0) { // 빈 라인 건너뛰기
+                               processData(line.trim()); // 데이터 처리
+                           }
+                       });
+                   }
+               } catch (error) {
+                   console.error('시리얼 읽기 오류:', error);
+               } finally {
                    reader.releaseLock();
-                   reader = null;
                }
-               console.log('데이터 수집 종료.');
            }
        }
 
+       // 데이터 처리 함수
+       function processData(dataString) {
+           console.log("수신 데이터:", dataString);
+           const parts = dataString.split(',').map(s => s.trim()); // 콤마로 분리, 공백 제거
 
-       // 테이블 및 차트 업데이트 함수
-       function updateTableAndCharts(data) {
-           const now = new Date();
-           // 24시간 형식으로 시, 분, 초, 1/100초를 표현
-           const hours = String(now.getHours()).padStart(2, '0');
-           const minutes = String(now.getMinutes()).padStart(2, '0');
-           const seconds = String(now.getSeconds()).padStart(2, '0');
-           const milliseconds = String(Math.floor(now.getMilliseconds() / 10)).padStart(2, '0'); // 1/100초 단위
-           const timeString = `${hours}:${minutes}:${seconds}.${milliseconds}`;
-
-           const rawDataValues = data.split(',');
-           const dataValues = new Array(rawDataValues.length);
-           for (let i = 0; i < rawDataValues.length; i++) {
-               dataValues[i] = parseFloat(rawDataValues[i].trim());
+           if (parts.length < 2) {
+               console.warn("유효하지 않은 데이터 형식:", dataString);
+               return;
            }
 
-           // 센서 수에 따라 테이블 헤더 업데이트 (변경된 경우에만)
-           if (dataValues.length !== sensorCount) {
-               updateTableHeader(dataValues.length); 
+           const time = new Date().toLocaleTimeString(); // 현재 시각
+           const dataValues = parts.slice(1).map(Number).filter(n => !isNaN(n)); // 숫자 데이터만 추출
+
+           if (dataValues.length === 0) {
+               console.warn("유효한 숫자 데이터가 없습니다:", dataString);
+               return;
            }
 
-           const newRow = dataTableBody.insertRow(0); // 맨 위에 새 행 삽입
-           newRow.insertCell(0).textContent = sequenceNumber++; // 순번 추가
-           newRow.insertCell(1).textContent = timeString; // 시각 추가
+           // 센서 개수 업데이트 (초기화 또는 변경 감지)
+           if (sensorCount !== dataValues.length) {
+               updateTableHeader(dataValues.length);
+               // 새 센서가 추가되면 차트 데이터셋도 업데이트
+               lineChart.data.datasets = [];
+               barChart.data.datasets[0].data = [];
+               barChart.data.datasets[0].backgroundColor = [];
+               barChart.data.datasets[0].borderColor = [];
+               barChart.data.labels = [];
 
-           // 필요한 경우 라인 차트에 새 데이터셋 추가 및 데이터 업데이트
-           let lineChartNeedsUpdate = false;
-           for (let i = 0; i < dataValues.length; i++) {
-               if (lineChart.data.datasets.length <= i) { // 중복 추가 방지
-                   const colorIndex = i % lineChartColors.length;
+               sensorNames.forEach((name, i) => {
                    lineChart.data.datasets.push({
-                       label: sensorNames[i], // 사용자 정의 센서 이름 사용
+                       label: name,
                        data: [],
-                       borderColor: lineChartColors[colorIndex],
+                       borderColor: lineChartColors[i % lineChartColors.length],
                        tension: 0.1,
                        fill: false
                    });
-                   lineChartNeedsUpdate = true;
-               }
+                   barChart.data.labels.push(name);
+                   barChart.data.datasets[0].backgroundColor.push(lineChartColors[i % lineChartColors.length]);
+                   barChart.data.datasets[0].borderColor.push(lineChartColors[i % lineChartColors.length].replace('rgb', 'rgba').replace(')', ', 1)'));
+               });
+               lineChart.update('none');
+               barChart.update('none');
            }
-           lineChart.data.labels.push(timeString); // 라인 차트 라벨 추가
-           lineChartNeedsUpdate = true; // 라벨이 추가되었으므로 업데이트 필요
+
+
+           // 테이블에 새 행 추가
+           const newRow = dataTableBody.insertRow(0); // 맨 위에 새 행 추가
+           const sequenceCell = newRow.insertCell(0);
+           const timeCell = newRow.insertCell(1);
+
+           sequenceCell.textContent = sequenceNumber++;
+           timeCell.textContent = time;
 
            dataValues.forEach((value, index) => {
-               newRow.insertCell(index + 2).textContent = value; // 센서 데이터 추가
-               if (!isNaN(value)) {
-                   lineChart.data.datasets[index].data.push(value); // 라인 차트 데이터 추가
-               } else {
-                   lineChart.data.datasets[index].data.push(NaN); // 유효하지 않은 데이터는 NaN으로 추가
+               const dataCell = newRow.insertCell(index + 2);
+               dataCell.textContent = value.toFixed(2); // 소수점 두 자리까지 표시
+
+               // 꺾은선 차트 데이터 추가
+               if (lineChart.data.datasets[index]) {
+                   lineChart.data.datasets[index].data.push(value);
                }
            });
 
-           // 통계 테이블 업데이트 (누적)
+           // 테이블 행 수 제한
+           while (dataTableBody.children.length > tableRowLimit) {
+               dataTableBody.removeChild(dataTableBody.lastChild);
+           }
+
+
+           // 라인 차트 X축 라벨 추가 (하나만 추가)
+           if (lineChart.data.labels.length === 0 || lineChart.data.labels[lineChart.data.labels.length - 1] !== time) {
+               lineChart.data.labels.push(time);
+           }
+
+           // 라인 차트 데이터셋 길이 조절
+           if (lineChart.data.labels.length > graphDataLimit) {
+               lineChart.data.labels = lineChart.data.labels.slice(-graphDataLimit);
+               lineChart.data.datasets.forEach(dataset => {
+                   dataset.data = dataset.data.slice(-graphDataLimit);
+               });
+           }
+           lineChart.update('none');
+
+
+           // 막대 그래프 데이터 업데이트 (가장 최근 값 사용)
+           barChart.data.datasets[0].data = dataValues;
+           barChart.update('none');
+
+           // 게이지 차트 업데이트 (첫 번째 센서 데이터 사용)
+           if (dataValues.length > 0) {
+               const gaugeValue = dataValues[0];
+               const gaugeMaxValue = manualScaleToggle.checked ? parseFloat(yMaxInput.value) : 1024;
+               gaugeChart.data.datasets[0].data = [gaugeValue, gaugeMaxValue - gaugeValue];
+               gaugeLabel.textContent = gaugeValue.toFixed(2);
+               gaugeChart.update('none');
+           }
+
+           // 통계 테이블 업데이트
            updateStatsTable(dataValues);
 
-           // 막대 차트 업데이트
-           const barChartLabels = sensorNames.slice(0, dataValues.length); // 사용자 정의 센서 이름 사용
-           barChart.data.labels = barChartLabels;
-           barChart.data.datasets[0].data = dataValues;
-           // 막대 그래프 색상을 lineChartColors에서 가져오도록 수정
-           barChart.data.datasets[0].backgroundColor = dataValues.map((_, index) => lineChartColors[index % lineChartColors.length]);
-           barChart.data.datasets[0].borderColor = dataValues.map((_, index) => lineChartColors[index % lineChartColors.length]);
-           barChart.update('none'); // 애니메이션 없이 업데이트
-
-
-           // 게이지 차트 업데이트 (첫 번째 센서 값 사용)
-           if (dataValues.length > 0 && !isNaN(dataValues[0])) {
-               const firstSensorValue = dataValues[0];
-               const gaugeMaxValue = manualScaleToggle.checked ? parseFloat(yMaxInput.value) : 1024;
-               const clampedValue = Math.min(Math.max(firstSensorValue, 0), gaugeMaxValue);
-               gaugeChart.data.datasets[0].data = [clampedValue, gaugeMaxValue - clampedValue];
-               gaugeLabel.textContent = firstSensorValue;
-           } else {
-               gaugeChart.data.datasets[0].data = [0, 1024];
-               gaugeLabel.textContent = '---';
-           }
-           gaugeChartTitle.textContent = `게이지 차트 (${sensorNames[0] || '센서 1'})`;
-           gaugeChart.update('none'); // 애니메이션 없이 업데이트
-
-
-           // Remove old data from live data table and charts
-           while (dataTableBody.children.length > tableRowLimit) {
-               dataTableBody.removeChild(dataTableBody.lastChild); // Remove from the bottom
-           }
-
-           while (lineChart.data.labels.length > graphDataLimit) {
-               lineChart.data.labels.shift();
-               lineChart.data.datasets.forEach(dataset => dataset.data.shift());
-               lineChartNeedsUpdate = true;
-           }
-
-           // Update line chart only if necessary
-           if (lineChartNeedsUpdate) {
-               lineChart.update('none');
-           }
-       }
-       
-       // 그래프 이미지를 결과 영역에 삽입하는 헬퍼 함수
-       function insertImageIntoResultArea(imageDataURL, altText) {
-           const imageEntry = document.createElement('div');
-           imageEntry.classList.add('image-entry');
-
-           // 버튼 그룹 컨테이너 생성 (이제 image-entry의 첫 번째 자식)
-           const buttonContainer = document.createElement('div');
-           buttonContainer.classList.add('image-entry-buttons');
-
-           // 위로 이동 버튼 생성
-           const moveUpButton = document.createElement('button');
-           moveUpButton.classList.add('move-up-button');
-           moveUpButton.textContent = '▲';
-           moveUpButton.title = '위로 이동';
-           moveUpButton.addEventListener('click', handleMoveUp);
-           buttonContainer.appendChild(moveUpButton);
-
-           // 아래로 이동 버튼 생성
-           const moveDownButton = document.createElement('button'); // <-- 이 줄이 수정되었습니다.
-           moveDownButton.classList.add('move-down-button');
-           moveDownButton.textContent = '▼';
-           moveDownButton.title = '아래로 이동';
-           moveDownButton.addEventListener('click', handleMoveDown);
-           buttonContainer.appendChild(moveDownButton);
-
-           // 삭제 버튼 생성
-           const deleteButton = document.createElement('button');
-           deleteButton.classList.add('delete-image-button');
-           deleteButton.textContent = 'x';
-           deleteButton.title = '이미지 삭제';
-           deleteButton.addEventListener('click', () => {
-               imageEntry.remove(); // 전체 image-entry 컨테이너 제거
-               updateButtonStates(imageEntry.parentNode); // 삭제 후 버튼 상태 업데이트
-               console.log('Image deleted:', altText);
-           });
-           buttonContainer.appendChild(deleteButton);
-           
-           imageEntry.appendChild(buttonContainer); // 버튼 그룹을 image-entry에 먼저 추가
-
-           // 이미지와 설명을 감싸는 새로운 div
-           const imageContentRow = document.createElement('div');
-           imageContentRow.classList.add('image-content-row');
-
-           // 이미지 래퍼 생성
-           const imageWrapper = document.createElement('div');
-           imageWrapper.classList.add('image-wrapper');
-           const img = document.createElement('img');
-           img.src = imageDataURL;
-           img.alt = altText;
-           imageWrapper.appendChild(img);
-           
-           // 설명 영역 생성
-           const descriptionArea = document.createElement('div');
-           descriptionArea.classList.add('image-description');
-           descriptionArea.setAttribute('contenteditable', 'true');
-           descriptionArea.textContent = '이미지에 대한 설명을 입력하세요.'; // 기본 텍스트
-
-           imageContentRow.appendChild(imageWrapper);
-           imageContentRow.appendChild(descriptionArea);
-
-           imageEntry.appendChild(imageContentRow); // image-content-row를 image-entry에 추가
-           
-           // 최종적으로 실험 결과 영역에 추가
-           experimentResultGraphArea.appendChild(imageEntry);
-           updateButtonStates(experimentResultGraphArea); // 새 항목 추가 후 버튼 상태 업데이트
-           console.log('Image inserted:', altText);
+           // 시작/정지 버튼 상태 업데이트 (데이터가 들어오면 정지 버튼 활성화 가능)
+           stopButton.disabled = false;
        }
 
-       // "이미지 삽입" 버튼 클릭 이벤트 핸들러 (로컬 이미지 업로드)
-       insertLocalImageButton.addEventListener('click', () => {
-           localImageInput.click(); // 숨겨진 파일 입력 클릭 트리거
+
+       // 시작 버튼
+       startButton.addEventListener('click', () => {
+           // 시리얼 포트가 연결되어 있지 않으면 경고
+           if (!port || !port.readable) {
+               alert('먼저 장치를 연결해주세요.');
+               return;
+           }
+           reading = true;
+           startButton.disabled = true;
+           stopButton.disabled = false;
+           readLoop(); // 데이터 읽기 루프 다시 시작
        });
 
-       // 파일 입력 변경 이벤트 핸들러 (실험 이미지 영역에 로컬 이미지 업로드)
+       // 정지 버튼
+       stopButton.addEventListener('click', async () => {
+           reading = false;
+           startButton.disabled = false;
+           stopButton.disabled = true;
+           if (reader) {
+               await reader.cancel(); // 읽기 작업 취소
+           }
+           console.log('Data collection stopped.');
+       });
+
+       // 초기화 버튼
+       resetButton.addEventListener('click', () => {
+           // 데이터 초기화 로직
+           sequenceNumber = 1;
+           sensorData = Array.from({
+               length: sensorCount
+           }, () => []); // 센서 데이터 초기화
+           dataTableBody.innerHTML = ''; // 테이블 내용 초기화
+           statsTableBody.innerHTML = ''; // 통계 테이블 내용 초기화
+
+           // 차트 데이터 초기화
+           lineChart.data.labels = [];
+           lineChart.data.datasets.forEach(dataset => {
+               dataset.data = [];
+           });
+           lineChart.update('none');
+
+           barChart.data.labels = [];
+           barChart.data.datasets[0].data = [];
+           barChart.update('none');
+
+           gaugeChart.data.datasets[0].data = [0, manualScaleToggle.checked ? parseFloat(yMaxInput.value) : 1024];
+           gaugeLabel.textContent = '0';
+           gaugeChart.update('none');
+
+           // 초기 테이블 헤더 다시 그림 (센서 이름은 유지)
+           updateTableHeader(sensorCount); // 기존 센서 개수로 헤더 다시 그림
+
+           startButton.disabled = false; // 시작 버튼 다시 활성화
+           stopButton.disabled = true; // 정지 버튼 비활성화
+           console.log('All data reset.');
+       });
+
+
+       // 보고서 이미지 삽입
+       insertLocalImageButton.addEventListener('click', () => {
+           localImageInput.click(); // 숨겨진 input[type="file"] 클릭
+       });
+
        localImageInput.addEventListener('change', (event) => {
            const file = event.target.files[0];
            if (file) {
                const reader = new FileReader();
                reader.onload = (e) => {
-                   const imageDataURL = e.target.result;
-                   // 새로운 이미지 항목 컨테이너 생성
-                   const imageEntry = document.createElement('div');
-                   imageEntry.classList.add('image-entry');
-
-                   // 버튼 그룹 컨테이너 생성
-                   const buttonContainer = document.createElement('div');
-                   buttonContainer.classList.add('image-entry-buttons');
-
-                   // 위로 이동 버튼 생성
-                   const moveUpButton = document.createElement('button');
-                   moveUpButton.classList.add('move-up-button');
-                   moveUpButton.textContent = '▲';
-                   moveUpButton.title = '위로 이동';
-                   moveUpButton.addEventListener('click', handleMoveUp);
-                   buttonContainer.appendChild(moveUpButton);
-
-                   // 아래로 이동 버튼 생성
-                   const moveDownButton = document.createElement('button'); // <-- 이 줄이 수정되었습니다.
-                   moveDownButton.classList.add('move-down-button');
-                   moveDownButton.textContent = '▼';
-                   moveDownButton.title = '아래로 이동';
-                   moveDownButton.addEventListener('click', handleMoveDown);
-                   buttonContainer.appendChild(moveDownButton);
-
-                   // 삭제 버튼 생성
-                   const deleteButton = document.createElement('button');
-                   deleteButton.classList.add('delete-image-button');
-                   deleteButton.textContent = 'x';
-                   deleteButton.title = '이미지 삭제';
-                   deleteButton.addEventListener('click', () => {
-                       imageEntry.remove();
-                       updateButtonStates(imageEntry.parentNode); // 삭제 후 버튼 상태 업데이트
-                       console.log('Image deleted: Uploaded Image');
-                   });
-                   buttonContainer.appendChild(deleteButton);
-                   
-                   imageEntry.appendChild(buttonContainer); // 버튼 그룹을 image-entry에 먼저 추가
-
-                   // 이미지와 설명을 감싸는 새로운 div
-                   const imageContentRow = document.createElement('div');
-                   imageContentRow.classList.add('image-content-row');
-
-                   // 이미지 래퍼 생성
-                   const imageWrapper = document.createElement('div');
-                   imageWrapper.classList.add('image-wrapper');
-                   const img = document.createElement('img');
-                   img.src = imageDataURL;
-                   img.alt = 'Uploaded Image';
-                   imageWrapper.appendChild(img);
-
-                   // 설명 영역 생성
-                   const descriptionArea = document.createElement('div');
-                   descriptionArea.classList.add('image-description');
-                   descriptionArea.setAttribute('contenteditable', 'true');
-                   descriptionArea.textContent = '이미지에 대한 설명을 입력하세요.';
-                   
-                   imageContentRow.appendChild(imageWrapper);
-                   imageContentRow.appendChild(descriptionArea);
-
-                   imageEntry.appendChild(imageContentRow); // image-content-row를 image-entry에 추가
-                   
-                   // 실험 이미지 영역에 추가
-                   experimentImageArea.appendChild(imageEntry);
-                   updateButtonStates(experimentImageArea); // 새 항목 추가 후 버튼 상태 업데이트
-                   console.log('Local image inserted.');
+                   addImageToReport(experimentImageArea, e.target.result);
                };
                reader.readAsDataURL(file);
            }
        });
 
+       // 보고서에 이미지 추가 함수
+       function addImageToReport(targetArea, imageDataUrl, description = '') {
+           const imageEntry = document.createElement('div');
+           imageEntry.classList.add('image-entry');
 
-       // -- NEW: 순서 변경 버튼 핸들러 --
-       function handleMoveUp(e) {
-           const imageEntry = e.target.closest('.image-entry');
-           if (imageEntry && imageEntry.previousElementSibling) {
-               const parent = imageEntry.parentNode;
-               parent.insertBefore(imageEntry, imageEntry.previousElementSibling);
-               updateButtonStates(parent); // 순서 변경 후 모든 버튼 상태 업데이트
-           }
-       }
+           // 이미지 및 설명 컨테이너
+           const imageContentRow = document.createElement('div');
+           imageContentRow.classList.add('image-content-row');
 
-       function handleMoveDown(e) {
-           const imageEntry = e.target.closest('.image-entry');
-           if (imageEntry && imageEntry.nextElementSibling) {
-               const parent = imageEntry.parentNode;
-               parent.insertBefore(imageEntry.nextElementSibling, imageEntry);
-               updateButtonStates(parent); // 순서 변경 후 모든 버튼 상태 업데이트
-           }
-       }
+           const imageWrapper = document.createElement('div');
+           imageWrapper.classList.add('image-wrapper');
+           const img = document.createElement('img');
+           img.src = imageDataUrl;
+           imageWrapper.appendChild(img);
 
-       // 컨테이너 내 모든 이미지 항목의 버튼 상태 업데이트 함수
-       function updateButtonStates(container) {
-           Array.from(container.children).forEach(item => {
-               const moveUpBtn = item.querySelector('.move-up-button');
-               const moveDownBtn = item.querySelector('.move-down-button');
+           const imageDescription = document.createElement('div');
+           imageDescription.classList.add('image-description');
+           imageDescription.contentEditable = true;
+           imageDescription.textContent = description || '이미지에 대한 설명을 입력하세요.';
 
-               if (moveUpBtn) {
-                   moveUpBtn.disabled = !item.previousElementSibling;
-               }
-               if (moveDownBtn) {
-                   moveDownBtn.disabled = !item.nextElementSibling;
+           imageContentRow.appendChild(imageWrapper);
+           imageContentRow.appendChild(imageDescription);
+
+           // 버튼 그룹 (삭제, 위로, 아래로)
+           const buttonGroup = document.createElement('div');
+           buttonGroup.classList.add('image-entry-buttons');
+
+           const moveUpButton = document.createElement('button');
+           moveUpButton.textContent = '▲';
+           moveUpButton.classList.add('move-up-button');
+           moveUpButton.title = '위로 이동';
+           moveUpButton.addEventListener('click', () => moveImageEntry(imageEntry, -1));
+
+           const moveDownButton = document.createElement('button');
+           moveDownButton.textContent = '▼';
+           moveDownButton.classList.add('move-down-button');
+           moveDownButton.title = '아래로 이동';
+           moveDownButton.addEventListener('click', () => moveImageEntry(imageEntry, 1));
+
+           const deleteButton = document.createElement('button');
+           deleteButton.textContent = '✖';
+           deleteButton.classList.add('delete-image-button');
+           deleteButton.title = '삭제';
+           deleteButton.addEventListener('click', () => {
+               if (confirm('이 이미지를 삭제하시겠습니까?')) {
+                   targetArea.removeChild(imageEntry);
+                   updateButtonStates(targetArea); // 버튼 상태 업데이트
                }
            });
+
+           buttonGroup.appendChild(moveUpButton);
+           buttonGroup.appendChild(moveDownButton);
+           buttonGroup.appendChild(deleteButton);
+
+           imageEntry.appendChild(buttonGroup); // 버튼 그룹 먼저 추가
+           imageEntry.appendChild(imageContentRow); // 이미지 내용 추가
+
+           // 파일 입력 버튼 바로 뒤에 이미지 삽입 (또는 끝에 추가)
+           const insertButton = targetArea.querySelector('#insertLocalImageButton');
+           if (insertButton) {
+               targetArea.insertBefore(imageEntry, insertButton.nextSibling);
+           } else {
+               targetArea.appendChild(imageEntry);
+           }
+           updateButtonStates(targetArea); // 버튼 상태 업데이트
        }
-       // -- END NEW: 순서 변경 버튼 핸들러 --
 
-       // "결과 전송" for Line Graph
-       sendLineGraphToReportButton.addEventListener('click', () => {
-           if (lineChartCanvas) {
-               insertImageIntoResultArea(lineChartCanvas.toDataURL('image/png'), '꺾은선 그래프');
-               console.log('Line graph sent to report.');
-           } else {
-               alert('전송할 꺾은선 그래프가 없습니다.');
+       // 이미지 항목 이동 함수
+       function moveImageEntry(entry, direction) {
+           const parent = entry.parentNode;
+           const siblings = Array.from(parent.children).filter(child => child.classList.contains('image-entry'));
+           const currentIndex = siblings.indexOf(entry);
+           const newIndex = currentIndex + direction;
+
+           if (newIndex >= 0 && newIndex < siblings.length) {
+               const referenceNode = siblings[newIndex];
+               if (direction === -1) { // 위로 이동
+                   parent.insertBefore(entry, referenceNode);
+               } else { // 아래로 이동
+                   parent.insertBefore(entry, referenceNode.nextSibling);
+               }
+               updateButtonStates(parent); // 버튼 상태 업데이트
            }
-       });
+       }
 
-       // "결과 전송" for Bar Graph
-       sendBarGraphToReportButton.addEventListener('click', () => {
-           if (barChartCanvas) {
-               insertImageIntoResultArea(barChartCanvas.toDataURL('image/png'), '막대 그래프');
-               console.log('Bar graph sent to report.');
-           } else {
-               alert('전송할 막대 그래프가 없습니다.');
-           }
-       });
+       // 버튼 상태 업데이트 (첫/마지막 항목에 따라 비활성화)
+       function updateButtonStates(area) {
+           const imageEntries = Array.from(area.querySelectorAll('.image-entry'));
+           imageEntries.forEach((entry, index) => {
+               const moveUpButton = entry.querySelector('.move-up-button');
+               const moveDownButton = entry.querySelector('.move-down-button');
 
-       // "결과 전송" for Gauge Chart
-       sendGaugeChartToReportButton.addEventListener('click', () => {
-           if (gaugeChartCanvas) {
-               insertImageIntoResultArea(gaugeChartCanvas.toDataURL('image/png'), '게이지 차트');
-               console.log('Gauge chart sent to report.');
-           } else {
-               alert('전송할 게이지 차트가 없습니다.');
-           }
-       });
+               if (moveUpButton) moveUpButton.disabled = (index === 0);
+               if (moveDownButton) moveDownButton.disabled = (index === imageEntries.length - 1);
+           });
+       }
 
-       // "보고서 이미지 다운로드" (이전 "보고서 저장" 버튼 기능 대체)
-       saveReportButton.addEventListener('click', () => {
-           const buttonsToHide = reportWritingSection.querySelectorAll('.image-entry-buttons');
-           // Hide buttons
+       // 차트 이미지를 보고서에 삽입하는 일반 함수
+       async function sendChartToReport(chartCanvas, targetArea, descriptionText) {
+           // 차트 생성 버튼들을 일시적으로 숨김
+           const buttonsToHide = document.querySelectorAll('.report-writing-section button, .image-entry-buttons button, .slider-container button');
            buttonsToHide.forEach(btn => btn.classList.add('hide-for-capture'));
 
-           // html2canvas를 사용하여 reportWritingSection 요소를 캡처
-           html2canvas(reportWritingSection, {
-               scale: 2, // 고해상도 이미지 생성을 위해 스케일 조정 (선택 사항)
-               useCORS: true // 외부 이미지(만약 있다면) 로드를 위해 필요
+           await html2canvas(chartCanvas, {
+               useCORS: true, // 크로스 오리진 이미지 로드 허용 (필요시)
+               scale: 2, // 고해상도 캡처
+               logging: false // 콘솔 로깅 비활성화
            }).then(canvas => {
-               // 생성된 canvas를 이미지 데이터 URL로 변환
+               const imageDataURL = canvas.toDataURL('image/png');
+               addImageToReport(targetArea, imageDataURL, descriptionText);
+               alert('차트 이미지가 보고서에 삽입되었습니다.');
+           }).catch(error => {
+               console.error('차트 이미지를 생성하는 데 실패했습니다:', error);
+               alert('차트 이미지를 보고서에 삽입하는 데 실패했습니다. 다시 시도해주세요.');
+           }).finally(() => {
+               // Show buttons again, regardless of success or failure
+               buttonsToHide.forEach(btn => btn.classList.remove('hide-for-capture'));
+           });
+       }
+
+
+       // 라인 그래프를 보고서에 삽입
+       sendLineGraphToReportButton.addEventListener('click', () => {
+           sendChartToReport(lineChartCanvas, experimentResultGraphArea, '실험 데이터 꺾은선 그래프');
+       });
+
+       // 바 그래프를 보고서에 삽입
+       sendBarGraphToReportButton.addEventListener('click', () => {
+           sendChartToReport(barChartCanvas, experimentResultGraphArea, '센서별 최근 데이터 막대 그래프');
+       });
+
+       // 게이지 차트를 보고서에 삽입
+       sendGaugeChartToReportButton.addEventListener('click', () => {
+           sendChartToReport(gaugeChartCanvas, experimentResultGraphArea, '주요 센서 게이지 차트');
+       });
+
+       // 보고서 저장 (이미지로 다운로드)
+       saveReportButton.addEventListener('click', async () => {
+           // 인쇄를 위해 보고서 섹션 외의 모든 요소를 숨깁니다.
+           // html2canvas는 display: none 요소를 캡처하지 않습니다.
+           const buttonsToHide = document.querySelectorAll('.report-writing-section button');
+           buttonsToHide.forEach(btn => btn.classList.add('hide-for-capture'));
+
+           const originalBodyOverflow = document.body.style.overflow;
+           document.body.style.overflow = 'visible'; // 스크롤바가 이미지에 포함되지 않도록 설정
+
+           await html2canvas(reportWritingSection, {
+               useCORS: true,
+               scale: 2,
+               logging: false,
+               windowWidth: reportWritingSection.scrollWidth, // 전체 너비 캡처
+               windowHeight: reportWritingSection.scrollHeight // 전체 높이 캡처
+           }).then(canvas => {
                const imageDataURL = canvas.toDataURL('image/png');
 
                // 다운로드를 위한 임시 링크 생성
@@ -1512,75 +1294,7 @@
 
            // 드래그 앤 드롭 이벤트 리스너 제거됨 (더 이상 필요 없음)
            // 대신, 초기 로드 시 기존 이미지 항목이 있다면 버튼 상태를 업데이트
-           updateButtonStates(experimentImageArea);
-           updateButtonStates(experimentResultGraphArea);
-
-           // Initialize tabs
-           document.querySelectorAll('.tab-button').forEach(button => {
-               button.addEventListener('click', function(e) {
-                   e.preventDefault();
-                   const tabId = this.dataset.tab;
-
-                   document.querySelectorAll('.tab-content').forEach(content => {
-                       content.classList.remove('active');
-                   });
-                   document.querySelectorAll('.tab-button').forEach(btn => {
-                       btn.classList.remove('active');
-                   });
-
-                   document.getElementById(tabId).classList.add('active');
-                   this.classList.add('active');
-               });
-           });
-
-           // Set the default active tab (Report in this case, based on your request)
-           // You can change 'home' to 'report' if you want the report tab to be active by default
-           document.querySelector('.tab-button[data-tab="home"]').click();
        });
-
-        // Function to add new tabs (placeholder for now)
-        function addNewTab() {
-            // This is a placeholder. You would implement logic here to:
-            // 1. Get a unique ID for the new tab.
-            // 2. Prompt the user for a tab name.
-            // 3. Create a new .tab-button element.
-            // 4. Create a new .tab-content element.
-            // 5. Append them to the tab-container and body respectively.
-            // 6. Set the new tab as active.
-            alert('새 탭 추가 기능은 아직 구현되지 않았습니다.');
-            // Example of how you might add a tab (requires more robust ID and content management)
-            /*
-            const newTabIndex = document.querySelectorAll('.tab-button').length - 1; // Before the '+' button
-            const newTabId = `tab-${Date.now()}`;
-            const newTabButton = document.createElement('a');
-            newTabButton.href = `#${newTabId}`;
-            newTabButton.classList.add('tab-button');
-            newTabButton.dataset.tab = newTabId;
-            newTabButton.textContent = `New Tab ${newTabIndex}`;
-            newTabButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                const tabId = this.dataset.tab;
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.getElementById(tabId).classList.add('active');
-                this.classList.add('active');
-            });
-            document.querySelector('.tab-container').insertBefore(newTabButton, document.querySelector('.add-tab-button'));
-
-            const newTabContent = document.createElement('div');
-            newTabContent.id = newTabId;
-            newTabContent.classList.add('tab-content');
-            newTabContent.innerHTML = `<h1>Welcome to New Tab ${newTabIndex}</h1><p>This is dynamic content for the new tab.</p>`;
-            document.body.appendChild(newTabContent);
-
-            // Activate the new tab
-            newTabButton.click();
-            */
-        }
 
    </script>
 </body>
