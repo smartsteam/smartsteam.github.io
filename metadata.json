@@ -1,0 +1,7 @@
+{
+  "name": "Digital Science Lab",
+  "description": "A real-time Web Serial sensor dashboard with AI-powered data analysis for science experiments.",
+  "requestFramePermissions": [
+    "serial"
+  ]
+}
