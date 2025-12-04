@@ -1,45 +1,516 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DSL - Digital Science Lab</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디지털 과학실험 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      body { font-family: 'Inter', sans-serif; }
-      /* Custom scrollbar for data tables - Light Theme */
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: #e7e5e4; /* stone-200 */
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #a8a29e; /* stone-400 */
-        border-radius: 4px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #78716c; /* stone-500 */
-      }
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #c0392b;
+            --bg-color: #ecf0f1;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 스타일 */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        /* 컨트롤 패널 스타일 */
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .control-group h3 {
+            margin-top: 0;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        /* 버튼 스타일 */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.2s;
+            flex: 1;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #btnConnect { background-color: var(--accent-color); }
+        #btnDisconnect { background-color: var(--danger-color); }
+        #btnStart { background-color: var(--success-color); }
+        #btnPause { background-color: #f39c12; }
+
+        /* 슬라이더 및 입력 필드 스타일 */
+        .setting-item {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] { flex: 1; }
+        input[type="number"] { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        /* 차트 및 테이블 레이아웃 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 차트 컨테이너 */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* 테이블 스타일 */
+        .table-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* 상태 표시줄 */
+        #statusMsg {
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "recharts": "https://aistudiocdn.com/recharts@^3.5.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-stone-50 text-stone-900 antialiased overflow-hidden">
-    <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🔬 디지털 과학실험 대시보드</h1>
+        <p>이지메이커(Easymaker) 센서 데이터 실시간 분석</p>
+    </header>
+
+    <div class="control-panel">
+        <div class="control-group">
+            <h3>🔌 장치 연결 제어</h3>
+            <div class="btn-group">
+                <button id="btnConnect">장치 연결</button>
+                <button id="btnDisconnect" disabled>연결 해제</button>
+            </div>
+            <div class="btn-group" style="margin-top: 10px;">
+                <button id="btnStart" disabled>수집 시작</button>
+                <button id="btnPause" disabled>일시 정지</button>
+            </div>
+            <div id="statusMsg">상태: 연결 대기중...</div>
+        </div>
+
+        <div class="control-group">
+            <h3>📊 그래프 설정</h3>
+            
+            <div class="setting-item">
+                <label>X축 데이터 수(1~500):</label>
+                <span id="xRangeValue" style="font-weight:bold; color:var(--accent-color);">50</span>
+            </div>
+            <div class="setting-item">
+                <input type="range" id="xRange" min="1" max="500" value="50">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+
+            <div class="radio-group">
+                <label><input type="radio" name="yMode" value="auto" checked> Y축 자동(Auto)</label>
+                <label><input type="radio" name="yMode" value="manual"> Y축 수동(Manual)</label>
+            </div>
+            <div class="setting-item">
+                <label>최소값(Min):</label>
+                <input type="number" id="yMin" disabled placeholder="0">
+            </div>
+            <div class="setting-item">
+                <label>최대값(Max):</label>
+                <input type="number" id="yMax" disabled placeholder="100">
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <h3 style="margin-top:0;">📈 실시간 변화 그래프</h3>
+            <div class="chart-container">
+                <canvas id="sensorChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">📝 데이터 로그</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>순번</th>
+                            <th>시간</th>
+                            <th>값</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. 변수 선언 ---
+    let port;
+    let reader;
+    let inputDone;
+    let outputStream;
+    let inputStream;
+    let isConnected = false;
+    let isCollecting = false;
+    let isPaused = false;
+    let dataCounter = 0; // 데이터 순번
+    let allData = []; // 전체 데이터 저장소 (순번, 시간, 값)
+
+    // DOM 요소 참조
+    const btnConnect = document.getElementById('btnConnect');
+    const btnDisconnect = document.getElementById('btnDisconnect');
+    const btnStart = document.getElementById('btnStart');
+    const btnPause = document.getElementById('btnPause');
+    const statusMsg = document.getElementById('statusMsg');
+    const tableBody = document.getElementById('tableBody');
+    
+    const xRange = document.getElementById('xRange');
+    const xRangeValue = document.getElementById('xRangeValue');
+    const yModeRadios = document.getElementsByName('yMode');
+    const yMinInput = document.getElementById('yMin');
+    const yMaxInput = document.getElementById('yMax');
+
+    // --- 2. Chart.js 초기화 ---
+    const ctx = document.getElementById('sensorChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: '센서 데이터',
+                data: [],
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderWidth: 2,
+                tension: 0.1, // 부드러운 곡선
+                pointRadius: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // 실시간 성능을 위해 애니메이션 끔
+            scales: {
+                x: {
+                    title: { display: true, text: '시간/순서' }
+                },
+                y: {
+                    title: { display: true, text: '센서 값' },
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+
+    // --- 3. 이벤트 리스너 설정 ---
+
+    // Web Serial 미지원 브라우저 체크
+    if (!("serial" in navigator)) {
+        alert("이 브라우저는 Web Serial API를 지원하지 않습니다. Chrome 또는 Edge를 사용해주세요.");
+        btnConnect.disabled = true;
+        statusMsg.innerText = "상태: Web Serial API 미지원 브라우저";
+        statusMsg.style.color = "red";
+    }
+
+    // 연결 버튼
+    btnConnect.addEventListener('click', async () => {
+        try {
+            port = await navigator.serial.requestPort();
+            // 이지메이커 통신속도 115200 설정
+            await port.open({ baudRate: 115200 });
+            
+            isConnected = true;
+            updateUIState();
+            statusMsg.innerText = "상태: 연결됨 (대기중)";
+            statusMsg.style.color = "#27ae60";
+        } catch (err) {
+            console.error('Connection error:', err);
+            alert('장치 연결에 실패했습니다.');
+        }
+    });
+
+    // 해제 버튼
+    btnDisconnect.addEventListener('click', async () => {
+        if (reader) {
+            await reader.cancel();
+            await inputDone.catch(() => {});
+            reader = null;
+            inputDone = null;
+        }
+        if (port) {
+            await port.close();
+            port = null;
+        }
+        isConnected = false;
+        isCollecting = false;
+        isPaused = false;
+        updateUIState();
+        statusMsg.innerText = "상태: 연결 해제됨";
+        statusMsg.style.color = "#c0392b";
+    });
+
+    // 수집 시작 버튼
+    btnStart.addEventListener('click', () => {
+        if (!isConnected) return;
+        if (!isCollecting) {
+            // 처음 시작
+            isCollecting = true;
+            statusMsg.innerText = "상태: 데이터 수집 중...";
+            readSerialLoop(); // 데이터 읽기 루프 시작
+        }
+        isPaused = false;
+        btnStart.disabled = true;
+        btnPause.disabled = false;
+        btnPause.innerText = "일시 정지";
+    });
+
+    // 일시 정지 버튼
+    btnPause.addEventListener('click', () => {
+        if (!isCollecting) return;
+        isPaused = !isPaused;
+        if (isPaused) {
+            statusMsg.innerText = "상태: 일시 정지됨";
+            btnPause.innerText = "다시 시작";
+        } else {
+            statusMsg.innerText = "상태: 데이터 수집 중...";
+            btnPause.innerText = "일시 정지";
+        }
+    });
+
+    // X축 슬라이더 변경
+    xRange.addEventListener('input', (e) => {
+        const val = e.target.value;
+        xRangeValue.innerText = val;
+        updateChartDisplay(); // 차트 즉시 갱신
+    });
+
+    // Y축 모드 변경 (라디오 버튼)
+    yModeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const isManual = e.target.value === 'manual';
+            yMinInput.disabled = !isManual;
+            yMaxInput.disabled = !isManual;
+            updateChartScales();
+        });
+    });
+
+    // Y축 Min/Max 입력 변경
+    yMinInput.addEventListener('input', updateChartScales);
+    yMaxInput.addEventListener('input', updateChartScales);
+
+
+    // --- 4. 핵심 로직 함수 ---
+
+    function updateUIState() {
+        btnConnect.disabled = isConnected;
+        btnDisconnect.disabled = !isConnected;
+        btnStart.disabled = !isConnected || isCollecting;
+        btnPause.disabled = !isCollecting;
+    }
+
+    // 시리얼 데이터 읽기 루프
+    async function readSerialLoop() {
+        const textDecoder = new TextDecoderStream();
+        inputDone = port.readable.pipeTo(textDecoder.writable);
+        reader = textDecoder.readable.getReader();
+
+        let buffer = "";
+
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                if (value) {
+                    buffer += value;
+                    // 줄바꿈 문자로 데이터 분리
+                    const lines = buffer.split('\n');
+                    // 마지막 조각은 불완전할 수 있으므로 버퍼에 남김
+                    buffer = lines.pop(); 
+
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine && !isPaused) {
+                            processData(trimmedLine);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Read error:", error);
+            statusMsg.innerText = "상태: 통신 오류 발생";
+        } finally {
+            reader.releaseLock();
+        }
+    }
+
+    // 데이터 처리 및 UI 업데이트
+    function processData(rawData) {
+        // 숫자인지 확인
+        const floatVal = parseFloat(rawData);
+        if (isNaN(floatVal)) return; // 숫자가 아니면 무시
+
+        dataCounter++;
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString();
+
+        // 1. 데이터 저장
+        const dataPoint = {
+            id: dataCounter,
+            time: timeStr,
+            value: floatVal
+        };
+        allData.push(dataPoint);
+
+        // 2. 표 업데이트 (최신 데이터가 위로)
+        const row = `<tr>
+            <td>${dataPoint.id}</td>
+            <td>${dataPoint.time}</td>
+            <td>${dataPoint.value}</td>
+        </tr>`;
+        tableBody.insertAdjacentHTML('afterbegin', row);
+
+        // 3. 차트 업데이트
+        updateChartDisplay();
+    }
+
+    // 차트 화면 갱신 (슬라이딩 윈도우 적용)
+    function updateChartDisplay() {
+        const windowSize = parseInt(xRange.value); // 슬라이더 값
+        
+        // 전체 데이터 중 마지막 N개만 자르기
+        const visibleData = allData.slice(-windowSize);
+
+        // 차트 데이터셋 업데이트
+        chart.data.labels = visibleData.map(d => d.time); // X축: 시간
+        chart.data.datasets[0].data = visibleData.map(d => d.value); // Y축: 값
+
+        chart.update();
+    }
+
+    // Y축 스케일 설정 업데이트
+    function updateChartScales() {
+        const mode = document.querySelector('input[name="yMode"]:checked').value;
+        
+        if (mode === 'auto') {
+            chart.options.scales.y.min = null;
+            chart.options.scales.y.max = null;
+        } else {
+            const minVal = parseFloat(yMinInput.value);
+            const maxVal = parseFloat(yMaxInput.value);
+            
+            // 값이 유효할 때만 적용
+            if (!isNaN(minVal)) chart.options.scales.y.min = minVal;
+            if (!isNaN(maxVal)) chart.options.scales.y.max = maxVal;
+        }
+        chart.update();
+    }
+</script>
+
 </body>
 </html>
