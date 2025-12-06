@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이지메이커 수중 온도 실험 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; height: 100vh; display: flex; flex-direction: column; }
+        .main-wrapper { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .dashboard-row { display: grid; grid-template-columns: 320px 1fr 1fr; gap: 12px; padding: 12px; height: 55%; min-height: 380px; }
+        
+        .gallery-section { flex: 1; display: flex; flex-direction: column; border-top: 1px solid #e5e7eb; background: #f9fafb; overflow: hidden; }
+        .gallery-header { padding: 8px 16px; background: white; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .gallery-content { display: flex; flex: 1; overflow: hidden; }
+        .gallery-left { flex: 1; padding: 10px; overflow-y: auto; border-right: 1px solid #e5e7eb; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; align-content: start; }
+        .gallery-right { flex: 1; padding: 0; overflow-y: auto; background: white; }
+
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); padding: 12px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e5e7eb; height: 100%; }
+        .chart-container { flex: 1; position: relative; width: 100%; min-height: 0; }
+        
+        .controls-row { display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.8rem; white-space: nowrap; overflow-x: auto; margin-bottom: 4px; }
+        .controls-row.highlight { background-color: #fff7ed; border-color: #ffedd5; }
+        .control-group { display: flex; align-items: center; gap: 4px; }
+        .divider { width: 1px; height: 16px; background-color: #cbd5e1; margin: 0 4px; }
+        .spacer { flex: 1; }
+        
+        input[type="number"] { border: 1px solid #d1d5db; border-radius: 4px; padding: 2px 4px; width: 50px; text-align: center; font-size: 0.8rem; }
+        select { border: 1px solid #d1d5db; border-radius: 4px; padding: 2px; font-size: 0.85rem; }
+        input[type=range] { width: 80px; height: 4px; background: #cbd5e1; border-radius: 5px; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
+        th { background-color: #f3f4f6; padding: 8px; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; font-weight: 600; color: #4b5563; }
+        td { padding: 6px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+        tr:hover td { background-color: #f9fafb; }
+        
+        .gallery-item { background: white; border: 2px solid transparent; border-radius: 8px; padding: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s; position: relative; }
+        .gallery-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .gallery-item.selected { border-color: #3b82f6; background-color: #eff6ff; }
+        .gallery-time { font-size: 0.75rem; font-weight: bold; color: #4b5563; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .gallery-img { width: 100%; border-radius: 4px; border: 1px solid #eee; }
+        .check-overlay { position: absolute; top: 8px; right: 8px; width: 16px; height: 16px; accent-color: #3b82f6; }
+
+        #imageModal { backdrop-filter: blur(5px); }
+        #modalContent { transition: transform 0.3s ease-out; }
+    </style>
+</head>
+<body>
+    <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm h-[60px] shrink-0">
+        <div class="flex items-center gap-3">
+            <h1 class="text-lg font-bold text-gray-800">🌊 수심별 온도 변화 by 이지메이커</h1>
+            <span id="statusLabel" class="px-2 py-0.5 rounded text-xs font-semibold bg-gray-200 text-gray-600">연결 끊김</span>
+        </div>
+        <div class="flex gap-2">
+            <button id="btnConnect" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-1.5 px-4 rounded transition">장치 연결</button>
+            <button id="btnStart" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-1.5 px-4 rounded transition opacity-50 cursor-not-allowed" disabled>시작</button>
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <div class="dashboard-row">
+            <div class="card">
+                <div class="flex justify-between items-center border-b pb-2 mb-2">
+                    <h2 class="text-sm font-bold text-gray-700">📡 센서 연결</h2>
+                    <div class="flex gap-1">
+                        <button id="btnAddRow" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs border font-bold transition">+ 추가</button>
+                        <button id="btnDelRow" class="bg-gray-100 hover:bg-red-100 text-red-500 px-2 py-1 rounded text-xs border font-bold transition">- 삭제</button>
+                    </div>
+                </div>
+                <div class="overflow-y-auto flex-1">
+                    <table id="configTable">
+                        <thead><tr><th width="30%">깊이(cm)</th><th width="40%">센서</th><th width="30%">온도</th></tr></thead>
+                        <tbody id="mappingTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="text-sm font-bold mb-1 text-gray-700">📉 깊이별 온도</h2>
+                <div class="controls-row">
+                    <span class="font-bold text-gray-600">X:</span>
+                    <label><input type="radio" name="cxMode" value="auto" checked> A</label>
+                    <label><input type="radio" name="cxMode" value="manual"> M</label>
+                    <div class="control-group" id="cxInputs">
+                        <input type="number" id="cxMin" placeholder="Min" disabled> ~ <input type="number" id="cxMax" placeholder="Max" disabled>
+                    </div>
+                    <div class="divider"></div>
+                    <span class="font-bold text-gray-600">Y:</span>
+                    <label><input type="radio" name="cyMode" value="auto" checked> A</label>
+                    <label><input type="radio" name="cyMode" value="manual"> M</label>
+                    <div class="control-group" id="cyInputs">
+                        <input type="number" id="cyMin" placeholder="Top" disabled> ~ <input type="number" id="cyMax" placeholder="Btm" disabled>
+                    </div>
+                </div>
+                <div class="controls-row highlight">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-orange-600">📷 자동 캡처:</span>
+                        <input type="number" id="autoCapInterval" value="10" min="1" class="text-center w-12 border rounded">
+                        <span class="text-xs text-gray-500">초</span>
+                        <button id="btnAutoCapToggle" class="bg-gray-200 text-gray-600 text-xs font-bold px-3 py-1 rounded transition hover:bg-gray-300">OFF</button>
+                    </div>
+                    <div class="spacer"></div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500 font-bold">⏱ 경과:</span>
+                        <span id="experimentTimer" class="font-mono font-bold text-blue-600 text-sm w-[60px] text-right">00:00:00</span>
+                        <div class="divider"></div>
+                        <button id="btnSnapshot" class="bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold px-2 py-1 rounded border border-blue-200 transition" title="수동 캡처">
+                            수동 캡처
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container bg-white"><canvas id="depthChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h2 class="text-sm font-bold mb-1 text-gray-700">⏱️ 실시간 온도 변화</h2>
+                <div class="controls-row">
+                    <span class="font-bold text-gray-600">Y:</span>
+                    <label><input type="radio" name="ryMode" value="auto" checked> A</label>
+                    <label><input type="radio" name="ryMode" value="manual"> M</label>
+                    <div class="control-group" id="ryInputs">
+                        <input type="number" id="ryMin" placeholder="Min" disabled> ~ <input type="number" id="ryMax" placeholder="Max" disabled>
+                    </div>
+                    <div class="divider"></div>
+                    <span class="font-bold text-gray-600">X:</span>
+                    <input type="range" id="dataRange" min="10" max="200" step="10" value="50">
+                    <span id="dataCountVal" class="text-blue-600 font-bold w-6 text-right">50</span>
+                </div>
+                <div class="chart-container"><canvas id="timeChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="gallery-section">
+            <div class="gallery-header">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-bold text-gray-700">📂 실험 과정 수집 (사진 & 데이터)</h3>
+                    <span id="snapCount" class="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-600 font-bold">0개</span>
+                </div>
+                <button id="btnDeleteSelected" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-1.5 rounded border border-red-200 transition flex items-center gap-1">
+                    <span class="text-lg leading-none">&times;</span> 선택 삭제
+                </button>
+            </div>
+            <div class="gallery-content">
+                <div class="gallery-left" id="galleryContainer">
+                    <p id="emptyGalleryMsg" class="text-gray-400 text-sm text-center col-span-full py-10 w-full">
+                        '캡처' 버튼을 눌러 데이터를 수집하세요.
+                    </p>
+                </div>
+                <div class="gallery-right">
+                    <table class="w-full">
+                        <thead id="snapTableHead"></thead>
+                        <tbody id="snapTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50">
+        <div id="modalContent" class="relative max-w-5xl w-full p-4 flex flex-col items-center">
+            <button id="closeModal" class="absolute -top-10 right-0 text-white text-4xl hover:text-gray-300 focus:outline-none">&times;</button>
+            <h4 id="modalTitle" class="text-white text-lg font-bold mb-2"></h4>
+            <img id="modalImage" src="" class="w-auto h-auto max-h-[85vh] rounded shadow-2xl border-4 border-white">
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Global Variables ---
+        let port, reader, inputDone;
+        let isConnected = false, isStreaming = false;
+        let simulationInterval = null, renderInterval = null, timerInterval = null, autoCapTimer = null;
+        let experimentStartTime = 0;
+        
+        const BAUDRATE = 115200;
+        const SENSOR_COUNT_MAX = 20;
+        const INITIAL_ROW_COUNT = 5;
+        
+        let tableConfig = []; 
+        const colors = ['#EF4444', '#3B82F6', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899', '#6366F1', '#84CC16', '#607D8B', '#795548'];
+        
+        let needsRender = false;
+        let latestValues = null;
+        let snapshots = []; // Data store
+
+        // --- 2. Chart Initialization ---
+        Chart.defaults.maintainAspectRatio = false;
+        
+        const depthChart = new Chart(document.getElementById('depthChart'), {
+            type: 'scatter',
+            data: { datasets: [{ label: '프로파일', data: [], showLine: true, borderColor: '#94a3b8', borderWidth: 2, pointRadius: 6 }] },
+            options: { animation: false, scales: { y: { reverse: true, title: { display: true, text: '깊이(cm)' } }, x: { position: 'top', title: { display: true, text: '온도(°C)' } } }, plugins: { legend: { display: false } } },
+            plugins: [{ id: 'customCanvasBackgroundColor', beforeDraw: (chart) => { const ctx = chart.canvas.getContext('2d'); ctx.save(); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore(); } }]
+        });
+
+        const timeChart = new Chart(document.getElementById('timeChart'), {
+            type: 'line', data: { labels: [], datasets: [] },
+            options: { animation: false, interaction: { mode: 'index', intersect: false }, scales: { x: { ticks: { maxTicksLimit: 6 }, grid: { display: false } }, y: { title: { display: true, text: '온도(°C)' } } }, plugins: { legend: { position: 'top', labels: { boxWidth: 8, font: {size: 10} } } } }
+        });
+
+        // --- 3. Table Logic ---
+        const tableBody = document.getElementById('mappingTableBody');
+        const btnAddRow = document.getElementById('btnAddRow');
+        const btnDelRow = document.getElementById('btnDelRow');
+
+        function addRow() {
+            const idx = tableConfig.length;
+            const tr = document.createElement('tr');
+            tr.id = `row-${idx}`;
+            
+            // Depth
+            const tdDepth = document.createElement('td');
+            const inputDepth = document.createElement('input');
+            inputDepth.type = 'number'; inputDepth.value = (idx + 1) * 10; inputDepth.style.width = '60px';
+            inputDepth.onchange = (e) => { updateTableConfig(idx, 'depth', e.target.value); updateChartLabels(); };
+            tdDepth.appendChild(inputDepth);
+            
+            // Sensor
+            const tdSensor = document.createElement('td');
+            const select = document.createElement('select');
+            for (let s = 0; s < SENSOR_COUNT_MAX; s++) {
+                const opt = document.createElement('option');
+                opt.value = s; opt.text = `S-${s + 1}`;
+                if (s === idx) opt.selected = true;
+                select.appendChild(opt);
+            }
+            select.onchange = (e) => { updateTableConfig(idx, 'sensorIdx', e.target.value); updateChartLabels(); };
+            tdSensor.appendChild(select);
+            
+            // Temp
+            const tdTemp = document.createElement('td');
+            const color = colors[idx % colors.length];
+            tdTemp.id = `temp-row-${idx}`; tdTemp.innerText = '-';
+            tdTemp.style.fontWeight = 'bold'; tdTemp.style.color = color;
+            
+            tr.appendChild(tdDepth); tr.appendChild(tdSensor); tr.appendChild(tdTemp);
+            tableBody.appendChild(tr);
+
+            tableConfig.push({ depth: parseFloat(inputDepth.value), sensorIdx: parseInt(select.value), color: color });
+            timeChart.data.datasets.push({ label: `${inputDepth.value}cm`, data: [], borderColor: color, backgroundColor: color, borderWidth: 1.5, pointRadius: 0, tension: 0.1 });
+            timeChart.update('none');
+        }
+
+        function removeRow() {
+            if (tableConfig.length === 0) return;
+            const idx = tableConfig.length - 1;
+            document.getElementById(`row-${idx}`).remove();
+            tableConfig.pop();
+            timeChart.data.datasets.pop();
+            timeChart.update('none');
+        }
+
+        function updateTableConfig(idx, key, val) {
+            if (tableConfig[idx]) {
+                if (key === 'depth') tableConfig[idx].depth = parseFloat(val);
+                if (key === 'sensorIdx') tableConfig[idx].sensorIdx = parseInt(val);
+            }
+        }
+        function updateChartLabels() {
+            timeChart.data.datasets.forEach((ds, i) => { if (tableConfig[i]) ds.label = `${tableConfig[i].depth}cm`; });
+            needsRender = true;
+        }
+
+        for (let i = 0; i < INITIAL_ROW_COUNT; i++) addRow();
+        btnAddRow.addEventListener('click', addRow);
+        btnDelRow.addEventListener('click', removeRow);
+
+        // --- 4. Controls & Timer ---
+        function toggleInputs(isManual, ...inputs) { inputs.forEach(i => { i.disabled = !isManual; if(!isManual) i.value=''; }); }
+        
+        const updateCenter = () => {
+            const mx = document.querySelector('input[name="cxMode"]:checked').value === 'manual';
+            const my = document.querySelector('input[name="cyMode"]:checked').value === 'manual';
+            const cxmin = document.getElementById('cxMin'), cxmax = document.getElementById('cxMax');
+            const cymin = document.getElementById('cyMin'), cymax = document.getElementById('cyMax');
+            toggleInputs(mx, cxmin, cxmax); toggleInputs(my, cymin, cymax);
+            if (mx && cxmin.value && cxmax.value) { depthChart.options.scales.x.min = parseFloat(cxmin.value); depthChart.options.scales.x.max = parseFloat(cxmax.value); } else { delete depthChart.options.scales.x.min; delete depthChart.options.scales.x.max; }
+            if (my && cymin.value && cymax.value) { depthChart.options.scales.y.min = parseFloat(cymin.value); depthChart.options.scales.y.max = parseFloat(cymax.value); } else { delete depthChart.options.scales.y.min; delete depthChart.options.scales.y.max; }
+            needsRender = true;
+        };
+        document.querySelectorAll('input[name="cxMode"], input[name="cyMode"]').forEach(el => el.addEventListener('change', updateCenter));
+        ['cxMin','cxMax','cyMin','cyMax'].forEach(id => document.getElementById(id).addEventListener('change', updateCenter));
+        
+        let maxDataPoints = 50;
+        document.getElementById('dataRange').addEventListener('input', (e) => { 
+            maxDataPoints = parseInt(e.target.value); 
+            document.getElementById('dataCountVal').innerText = maxDataPoints; 
+            trimData(); needsRender = true; 
+        });
+        const updateRightY = () => {
+            const m = document.querySelector('input[name="ryMode"]:checked').value === 'manual';
+            const rmin = document.getElementById('ryMin'), rmax = document.getElementById('ryMax');
+            toggleInputs(m, rmin, rmax);
+            if (m && rmin.value && rmax.value) { timeChart.options.scales.y.min = parseFloat(rmin.value); timeChart.options.scales.y.max = parseFloat(rmax.value); } else { delete timeChart.options.scales.y.min; delete timeChart.options.scales.y.max; }
+            needsRender = true;
+        };
+        document.querySelectorAll('input[name="ryMode"]').forEach(el => el.addEventListener('change', updateRightY));
+        ['ryMin','ryMax'].forEach(id => document.getElementById(id).addEventListener('change', updateRightY));
+
+        const timerLabel = document.getElementById('experimentTimer');
+        const btnSnapshot = document.getElementById('btnSnapshot');
+        const btnAutoCapToggle = document.getElementById('btnAutoCapToggle');
+        const inputAutoCap = document.getElementById('autoCapInterval');
+        let isAutoCapturing = false;
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            experimentStartTime = Date.now();
+            timerLabel.innerText = "00:00:00";
+            timerInterval = setInterval(() => {
+                const diff = Date.now() - experimentStartTime;
+                const date = new Date(diff);
+                const m = String(date.getMinutes()).padStart(2, '0');
+                const s = String(date.getSeconds()).padStart(2, '0');
+                timerLabel.innerText = `00:${m}:${s}`;
+            }, 1000);
+        }
+        function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
+
+        btnAutoCapToggle.addEventListener('click', () => {
+            if (isAutoCapturing) {
+                isAutoCapturing = false;
+                if (autoCapTimer) clearInterval(autoCapTimer);
+                btnAutoCapToggle.innerText = "OFF";
+                btnAutoCapToggle.className = "bg-gray-200 text-gray-600 text-xs font-bold px-3 py-1 rounded transition hover:bg-gray-300";
+            } else {
+                const sec = parseInt(inputAutoCap.value);
+                if (isNaN(sec) || sec < 1) return alert("1초 이상 설정해주세요.");
+                isAutoCapturing = true;
+                btnAutoCapToggle.innerText = "ON";
+                btnAutoCapToggle.className = "bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded transition hover:bg-orange-600";
+                captureSnapshot("자동 캡처");
+                autoCapTimer = setInterval(() => { if (isStreaming) captureSnapshot("자동 캡처"); }, sec * 1000);
+            }
+        });
+
+        // --- 6. Gallery Logic (Robust) ---
+        const galleryContainer = document.getElementById('galleryContainer');
+        const snapTableHead = document.getElementById('snapTableHead');
+        const snapTableBody = document.getElementById('snapTableBody');
+        const emptyMsg = document.getElementById('emptyGalleryMsg');
+        const snapCount = document.getElementById('snapCount');
+        const btnDeleteSelected = document.getElementById('btnDeleteSelected');
+
+        function captureSnapshot(type = "수동 캡처") {
+            const currentTime = timerLabel.innerText;
+            const imgData = depthChart.toBase64Image('image/png', 1.0);
+            
+            let currentDepths = [];
+            let currentTemps = [];
+            tableConfig.forEach((cfg, i) => {
+                const el = document.getElementById(`temp-row-${i}`);
+                const val = el ? el.innerText : '-';
+                currentDepths.push(cfg.depth + "cm");
+                currentTemps.push(val);
+            });
+
+            const snapshot = {
+                id: Date.now(),
+                time: currentTime,
+                type: type,
+                imgSrc: imgData,
+                depths: currentDepths,
+                temps: currentTemps,
+                selected: false
+            };
+            snapshots.unshift(snapshot);
+            renderGallery();
+        }
+
+        function renderGallery() {
+            if (snapshots.length === 0) {
+                emptyMsg.style.display = 'block';
+                snapTableHead.innerHTML = '';
+                snapTableBody.innerHTML = '';
+                galleryContainer.innerHTML = '';
+                galleryContainer.appendChild(emptyMsg);
+                snapCount.innerText = "0개";
+                return;
+            }
+            emptyMsg.style.display = 'none';
+            snapCount.innerText = `${snapshots.length}개`;
+
+            // Left: Images
+            galleryContainer.innerHTML = '';
+            snapshots.forEach(snap => {
+                const div = document.createElement('div');
+                div.className = `gallery-item ${snap.selected ? 'selected' : ''}`;
+                div.onclick = (e) => {
+                    if (e.target.tagName === 'INPUT') return;
+                    showModal(snap);
+                };
+                const badgeColor = snap.type === "자동 캡처" ? "text-orange-600" : "text-gray-600";
+                div.innerHTML = `
+                    <div class="gallery-time"><span><span class="${badgeColor}">●</span> ${snap.time}</span></div>
+                    <img src="${snap.imgSrc}" class="gallery-img">
+                    <input type="checkbox" class="check-overlay" ${snap.selected ? 'checked' : ''} onclick="toggleSelect(${snap.id}, event)">
+                `;
+                galleryContainer.appendChild(div);
+            });
+
+            // Right: Table
+            if (snapshots.length > 0) {
+                // FIXED: Use correct variable name (Error was here in previous turn)
+                const currentDepths = snapshots[0].depths; 
+                let headHtml = `<tr><th width="40"><input type="checkbox" onclick="toggleAll(this)"></th><th>시간</th>`;
+                currentDepths.forEach(d => headHtml += `<th>${d}</th>`);
+                headHtml += `</tr>`;
+                snapTableHead.innerHTML = headHtml;
+            }
+            let bodyHtml = '';
+            snapshots.forEach(snap => {
+                bodyHtml += `<tr class="${snap.selected ? 'bg-blue-50' : ''}">
+                    <td><input type="checkbox" ${snap.selected ? 'checked' : ''} onclick="toggleSelect(${snap.id}, event)"></td>
+                    <td class="font-bold text-gray-600">${snap.time}</td>`;
+                snap.temps.forEach(t => bodyHtml += `<td>${t}</td>`);
+                bodyHtml += `</tr>`;
+            });
+            snapTableBody.innerHTML = bodyHtml;
+        }
+
+        window.toggleSelect = function(id, e) {
+            if(e) e.stopPropagation();
+            const snap = snapshots.find(s => s.id === id);
+            if (snap) {
+                snap.selected = !snap.selected;
+                renderGallery();
+            }
+        }
+        window.toggleAll = function(el) {
+            const checked = el.checked;
+            snapshots.forEach(s => s.selected = checked);
+            renderGallery();
+        }
+        btnDeleteSelected.addEventListener('click', () => {
+            const selected = snapshots.filter(s => s.selected);
+            if (selected.length === 0) return alert("삭제할 항목을 선택해주세요.");
+            if (!confirm(`${selected.length}개의 데이터를 삭제하시겠습니까?`)) return;
+            snapshots = snapshots.filter(s => !s.selected);
+            renderGallery();
+        });
+        btnSnapshot.addEventListener('click', () => captureSnapshot("수동 캡처"));
+
+        // Modal
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeModal = document.getElementById('closeModal');
+        function showModal(snap) {
+            modalImage.src = snap.imgSrc;
+            modalTitle.innerText = `⏱ ${snap.time} (${snap.type})`;
+            imageModal.classList.remove('hidden'); imageModal.classList.add('flex');
+        }
+        closeModal.onclick = () => { imageModal.classList.add('hidden'); imageModal.classList.remove('flex'); };
+        imageModal.onclick = (e) => { if(e.target===imageModal) closeModal.click(); };
+
+        // --- 7. Data Processing ---
+        function processData(csvString) {
+            const values = csvString.trim().split(',').map(Number);
+            if (values.length === 0) return;
+            if (values.length > tableConfig.length) {
+                const diff = values.length - tableConfig.length;
+                for (let i = 0; i < diff; i++) addRow();
+            }
+            latestValues = values;
+            const now = new Date().toLocaleTimeString('ko-KR', { hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+            timeChart.data.labels.push(now);
+            tableConfig.forEach((row, idx) => {
+                if (row.sensorIdx < values.length) timeChart.data.datasets[idx].data.push(values[row.sensorIdx]);
+                else timeChart.data.datasets[idx].data.push(null);
+            });
+            trimData();
+            needsRender = true;
+        }
+
+        function trimData() {
+            const currentLen = timeChart.data.labels.length;
+            if (currentLen > maxDataPoints) {
+                const removeCount = currentLen - maxDataPoints;
+                timeChart.data.labels.splice(0, removeCount);
+                timeChart.data.datasets.forEach(ds => ds.data.splice(0, removeCount));
+            }
+        }
+
+        function startRenderLoop() {
+            if (renderInterval) clearInterval(renderInterval);
+            renderInterval = setInterval(() => {
+                if (needsRender) {
+                    if (latestValues) {
+                        tableConfig.forEach((row, idx) => {
+                            if (row.sensorIdx < latestValues.length) {
+                                const el = document.getElementById(`temp-row-${idx}`);
+                                if (el) el.innerText = latestValues[row.sensorIdx].toFixed(1);
+                            }
+                        });
+                        const scatterItems = [];
+                        tableConfig.forEach((row, idx) => {
+                            if (row.sensorIdx < latestValues.length) {
+                                scatterItems.push({ x: latestValues[row.sensorIdx], y: row.depth, color: row.color });
+                            }
+                        });
+                        scatterItems.sort((a, b) => a.y - b.y);
+                        depthChart.data.datasets[0].data = scatterItems.map(item => ({x: item.x, y: item.y}));
+                        depthChart.data.datasets[0].pointBackgroundColor = scatterItems.map(item => item.color);
+                        depthChart.data.datasets[0].pointBorderColor = scatterItems.map(item => item.color);
+                    }
+                    depthChart.update('none');
+                    timeChart.update('none');
+                    needsRender = false;
+                }
+            }, 100);
+        }
+
+        // --- 8. Serial Connection ---
+        const btnConnect = document.getElementById('btnConnect');
+        const btnStart = document.getElementById('btnStart');
+        const statusLabel = document.getElementById('statusLabel');
+
+        btnConnect.addEventListener('click', async () => {
+            if (!isConnected) {
+                try {
+                    if (!("serial" in navigator)) return alert("Web Serial 미지원");
+                    port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: BAUDRATE });
+                    isConnected = true;
+                    btnConnect.innerText = "해제"; btnConnect.classList.replace('bg-blue-600', 'bg-red-500'); btnConnect.classList.replace('hover:bg-blue-700', 'hover:bg-red-600');
+                    statusLabel.innerText = "연결됨"; statusLabel.classList.replace('bg-gray-200', 'bg-blue-100'); statusLabel.classList.replace('text-gray-600', 'text-blue-700');
+                    btnStart.disabled = false; btnStart.classList.remove("opacity-50", "cursor-not-allowed");
+                } catch (e) { alert("연결 실패"); }
+            } else {
+                // FORCE UI RESET FIRST
+                isConnected = false;
+                statusLabel.innerText = "연결 끊김"; 
+                statusLabel.classList.replace('bg-blue-100', 'bg-gray-200');
+                statusLabel.classList.replace('text-blue-700', 'text-gray-600');
+                btnConnect.innerText = "장치 연결"; 
+                btnConnect.classList.replace('bg-red-500', 'bg-blue-600');
+                btnConnect.classList.replace('hover:bg-red-600', 'hover:bg-blue-700');
+                btnStart.innerText = "시작"; 
+                btnStart.classList.replace('bg-yellow-500', 'bg-green-600');
+                btnStart.disabled = true; 
+                btnStart.classList.add("opacity-50", "cursor-not-allowed");
+
+                // Cleanup Logic
+                isStreaming = false;
+                stopTimer();
+                if (isAutoCapturing) toggleAutoCapture();
+                if (simulationInterval) clearInterval(simulationInterval);
+                if (renderInterval) clearInterval(renderInterval);
+                
+                try {
+                    if (reader) { await reader.cancel(); if (inputDone) await inputDone.catch(()=>{}); reader=null; inputDone=null; }
+                    if (port) { await port.close(); port=null; }
+                } catch(e) { console.warn(e); }
+            }
+        });
+
+        btnStart.addEventListener('click', () => {
+            if (!isConnected) return;
+            if (!isStreaming) {
+                isStreaming = true; startTimer(); btnStart.innerText = "정지"; btnStart.classList.replace('bg-green-600', 'bg-yellow-500');
+                startRenderLoop(); readLoop();
+            } else {
+                isStreaming = false; stopTimer(); btnStart.innerText = "시작"; btnStart.classList.replace('bg-yellow-500', 'bg-green-600');
+                if (simulationInterval) clearInterval(simulationInterval);
+            }
+        });
+
+        async function readLoop() {
+            const textDecoder = new TextDecoderStream();
+            inputDone = port.readable.pipeTo(textDecoder.writable);
+            const inputStream = textDecoder.readable;
+            reader = inputStream.getReader();
+            let buffer = "";
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                        buffer += value; const lines = buffer.split('\n'); buffer = lines.pop();
+                        if (isStreaming) for (const line of lines) if (line.trim()) processData(line.trim());
+                    }
+                }
+            } catch (error) {} finally { if (reader) reader.releaseLock(); }
+        }
+
+        // Test Simulation
+        btnStart.addEventListener('click', () => {
+             if (!isConnected && !simulationInterval && isStreaming) {
+                 startSimulation();
+             }
+        });
+        function startSimulation() {
+             simulationInterval = setInterval(() => {
+                const dummy = Array.from({length: tableConfig.length + 2}, () => (20 + Math.random() * 5).toFixed(2));
+                processData(dummy.join(','));
+            }, 50);
+        }
+        btnStart.disabled = false; btnStart.classList.remove("opacity-50", "cursor-not-allowed");
+    </script>
+</body>
+</html>
