@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSL - Digital Science Lab (Stop/Start Markers)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --bg-light-gray: #f4f6f9;
+            --bg-white: #ffffff;
+            --text-dark: #333333;
+            --text-gray: #666666;
+            --border-color: #e0e0e0;
+            --success-green: #28a745;
+            --danger-red: #dc3545;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light-gray);
+            margin: 0; padding: 0; color: var(--text-dark);
+            height: 100vh; display: flex; flex-direction: column;
+        }
+
+        /* --- Header --- */
+        .top-header {
+            background-color: var(--bg-white); padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--primary-blue); font-size: 1.2rem; }
+        .header-controls { display: flex; gap: 15px; align-items: center; }
+        .status-badge {
+            padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; background-color: #eee;
+            color: var(--text-gray); display: flex; align-items: center; gap: 5px;
+        }
+        .status-badge.connected { background-color: #d4edda; color: var(--success-green); }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+        }
+        .btn-primary { background-color: var(--primary-blue); color: white; }
+        .btn-secondary { background-color: #e9ecef; color: var(--text-dark); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* --- Layout --- */
+        .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
+        .left-panel { flex: 7; display: flex; flex-direction: column; overflow: hidden; gap: 15px; }
+        .right-panel { flex: 3; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .card {
+            background-color: var(--bg-white); border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 20px;
+            display: flex; flex-direction: column;
+        }
+
+        /* --- Chart Section --- */
+        .chart-card { flex: 1; min-height: 0; display:flex; flex-direction:column; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; flex-wrap: wrap; gap:10px; }
+        .chart-title { font-size: 1.1rem; font-weight: bold; color: var(--primary-blue); display: flex; align-items: center; gap: 8px; }
+        .chart-controls {
+            display: flex; gap: 15px; align-items: center; font-size: 0.9rem;
+            background-color: var(--bg-light-gray); padding: 8px 15px; border-radius: 20px;
+        }
+        .control-item { display: flex; align-items: center; gap: 8px; border-right: 1px solid #ddd; padding-right: 15px; }
+        .control-item:last-child { border-right: none; padding-right: 0; }
+        
+        .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-blue); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        .y-inputs input, #timeFormatSelect { 
+            width: 50px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; 
+            background-color: var(--bg-white); 
+            text-align: center; font-size: 0.9rem;
+        }
+        .y-inputs input { width: 50px; text-align: center; } 
+        #timeFormatSelect { width: 120px; } 
+
+        .chart-area { flex: 1; position: relative; width: 100%; height: 100%; min-height: 300px;}
+
+        /* --- Navigator Slider --- */
+        .navigator-container {
+            margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #eee;
+        }
+        .navigator-label { font-size: 0.85rem; color: var(--text-gray); margin-bottom: 5px; display: flex; justify-content: space-between; }
+        input[type="range"].history-slider { width: 100%; cursor: pointer; accent-color: var(--primary-blue); }
+
+        /* --- Right Panel --- */
+        .info-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-shrink: 0; }
+        .info-card { 
+            flex: 1; background-color: var(--bg-white); padding: 15px; border-radius: 10px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+            border: 1px solid #ddd; 
+            text-align: center;
+        }
+
+        .info-label { font-size: 0.85rem; color: var(--text-gray); margin-bottom: 5px; }
+        .info-value { font-size: 1.5rem; font-weight: bold; color: var(--text-dark); }
+
+        .log-card { flex: 1; display: flex; flex-direction: column; min-height: 200px; }
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: var(--success-green); font-weight: bold; flex-shrink: 0; }
+        .log-tools i { cursor: pointer; margin-left: 10px; font-size: 1.1rem; }
+        .table-wrapper { flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: center; }
+        th { position: sticky; top: 0; background-color: #f8f9fa; color: var(--text-gray); padding: 8px; border-bottom: 1px solid var(--border-color); z-index: 5; }
+        td { padding: 6px 8px; border-bottom: 1px solid #eee; white-space: nowrap; }
+        
+        .sensor-input {
+            border: 1px solid transparent; background: transparent; font-weight: bold;
+            color: var(--text-gray); width: 80px; text-align: center; cursor: pointer;
+        }
+        .sensor-input:hover, .sensor-input:focus { border: 1px solid #ddd; background: white; outline: none; border-radius: 4px; }
+
+        @media (max-width: 1024px) {
+            .main-container { flex-direction: column; overflow-y: auto; }
+            .left-panel, .right-panel { flex: none; height: auto; }
+            .chart-card { min-height: 450px; }
+            .info-cards { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .info-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-header">
+        <div class="brand"><i class="fa-solid fa-wave-square"></i><span>DSL 디지털 과학 실험실</span></div>
+        <div class="header-controls">
+            <div class="status-badge" id="connectionStatus"><i class="fa-solid fa-link-slash"></i> 연결 안됨</div>
+            <span style="font-size: 0.9rem; color: #666;"><i class="fa-solid fa-gauge-high"></i> 115200 Baud</span>
+            <button id="btnConnect" class="btn btn-primary"><i class="fa-solid fa-plug"></i> 연결</button>
+            <button id="btnStart" class="btn btn-secondary" disabled><i class="fa-solid fa-play"></i> 시작</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="card chart-card">
+                <div class="chart-header">
+                    <div class="chart-title"><i class="fa-solid fa-chart-line"></i> 실시간 데이터</div>
+                    <div class="chart-controls">
+                        <div class="control-item">
+                            <span>시간 형식</span>
+                            <select id="timeFormatSelect">
+                                <option value="H_M_S">시:분:초</option>
+                                <option value="H_M_S_MS">시:분:초:밀리초</option>
+                                <option value="M_S">분:초</option>
+                                <option value="M_S_MS">분:초:밀리초</option>
+                                <option value="S_MS">초:밀리초 (경과 시간)</option>
+                            </select>
+                        </div>
+                        <div class="control-item">
+                            <span>X축 줌</span>
+                            <input type="range" id="xRange" min="10" max="500" value="50" style="width:80px;">
+                            <span id="xRangeValue" style="font-weight:bold;">50</span>
+                        </div>
+                        <div class="control-item">
+                            <span>Y축</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="yAutoToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span id="yStatusText">자동</span>
+                        </div>
+                        <div class="control-item y-inputs" id="yManualInputs" style="opacity: 0.3; pointer-events: none;">
+                            <input type="number" id="yMin" placeholder="Min" value="0"> ~ <input type="number" id="yMax" placeholder="Max" value="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-area">
+                    <canvas id="sensorChart"></canvas>
+                    <div id="chartPlaceholder" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:#aaa;">시작 버튼을 눌러 데이터 수집을 시작하세요...</div>
+                </div>
+
+                <div class="navigator-container">
+                    <div class="navigator-label">
+                        <span><i class="fa-solid fa-magnifying-glass-chart"></i> 데이터 탐색</span>
+                        <span id="navInfo">실시간 모드</span>
+                    </div>
+                    <input type="range" id="historySlider" class="history-slider" min="0" max="0" value="0" disabled>
+                </div>
+                
+                <div id="sensorLegend" style="display:flex; gap:15px; justify-content:center; margin-top:10px; flex-wrap:wrap; flex-shrink: 0;"></div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="info-cards">
+                <div class="info-card">
+                    <div class="info-label">데이터 수</div>
+                    <div class="info-value" id="dataCountDisplay">0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">총 수집 시간</div>
+                    <div class="info-value" id="timerDisplay">00:00:00</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">시작/재시작 횟수</div>
+                    <div class="info-value" id="startCountDisplay">0</div>
+                </div>
+            </div>
+
+            <div class="card log-card">
+                <div class="log-header">
+                    <span><i class="fa-solid fa-list-ol"></i> 데이터 로그</span>
+                    <div class="log-tools">
+                        <i class="fa-solid fa-download" id="btnDownload" title="CSV 다운로드" style="color:var(--primary-blue)"></i>
+                        <i class="fa-solid fa-trash-can" id="btnDeleteSelected" title="선택 삭제" style="color:var(--danger-red)"></i>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead id="tableHead">
+                            <tr><th><input type="checkbox" id="checkAll"></th><th>시간</th><th>값</th></tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="3" class="empty-log">기록된 데이터 없음</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card guide-card">
+                <h4>사용 방법:</h4>
+                <ol>
+                    <li>시간 형식을 선택하여 X축과 로그를 커스텀하세요.</li>
+                    <li>'연결' 후 '시작' 버튼으로 데이터를 수집하세요.</li>
+                    <li><span style="color:#007bff; font-weight:bold;">파란 점</span>: 시작, <span style="color:#dc3545; font-weight:bold;">빨간 점</span>: 정지 지점</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <datalist id="sensorTypes">
+        <option value="온도">
+        <option value="습도">
+        <option value="조도">
+        <option value="전압">
+        <option value="전류">
+        <option value="기압">
+        <option value="소리">
+        <option value="거리">
+        <option value="pH">
+    </datalist>
+
+    <script>
+        // --- CONSTANTS & Variables ---
+        const MAX_DATA_POINTS = 1500; // 최대 수집 데이터 갯수 제한
+        const THROTTLE_RATE_MS = 150; // 차트 갱신 주기 (성능 최적화)
+        
+        let port, reader, inputDone;
+        let isConnected = false, isCollecting = false;
+        let dataCounter = 0, allData = [], sensorCount = 0;
+        let accumulatedTime = 0, currentSessionStart = 0, timerInterval = null;
+        let isNavigating = false;
+        let sensorNames = []; 
+        let sessionStartTimeAbsolute = 0; 
+        let startCount = 0;
+        let throttleTimer = null; 
+
+        // Start/Stop marker flags
+        let shouldMarkStart = false;
+
+        const colors = ['#007bff', '#6f42c1', '#28a745', '#dc3545', '#ffc107', '#17a2b8'];
+
+        // Time Format Definitions
+        const TIME_FORMATS = {
+            'H_M_S': { label: '시:분:초', opts: { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false } },
+            'H_M_S_MS': { label: '시:분:초:밀리초', opts: { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hour12: false } },
+            'M_S': { label: '분:초', opts: { minute: '2-digit', second: '2-digit' } },
+            'M_S_MS': { label: '분:초:밀리초', opts: { minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 } },
+            'S_MS': { label: '초:밀리초 (경과 시간)', custom: true }
+        };
+        let currentTimeFormat = 'H_M_S';
+
+        // Unit Mapping
+        const unitMap = {
+            '온도': '°C', '습도': '%', '조도': 'lx', '전압': 'V', '전류': 'A',
+            '기압': 'hPa', '소리': 'dB', '거리': 'cm', 'pH': ''
+        };
+
+        // --- DOM Elements ---
+        const els = {
+            btnConnect: document.getElementById('btnConnect'),
+            btnStart: document.getElementById('btnStart'),
+            status: document.getElementById('connectionStatus'),
+            chartPlaceholder: document.getElementById('chartPlaceholder'),
+            count: document.getElementById('dataCountDisplay'),
+            timer: document.getElementById('timerDisplay'),
+            startCountDisplay: document.getElementById('startCountDisplay'),
+            tableBody: document.getElementById('tableBody'),
+            tableHead: document.getElementById('tableHead'),
+            legend: document.getElementById('sensorLegend'),
+            timeFormatSelect: document.getElementById('timeFormatSelect'),
+            xRange: document.getElementById('xRange'),
+            xVal: document.getElementById('xRangeValue'),
+            slider: document.getElementById('historySlider'),
+            navInfo: document.getElementById('navInfo'),
+            yAuto: document.getElementById('yAutoToggle'),
+            yStatus: document.getElementById('yStatusText'),
+            yInputs: document.getElementById('yManualInputs'),
+            yMin: document.getElementById('yMin'),
+            yMax: document.getElementById('yMax')
+        };
+
+        // --- Time Formatting Function ---
+        function formatTime(date) {
+            if (currentTimeFormat === 'S_MS') {
+                if (sessionStartTimeAbsolute === 0) return '00.000';
+                
+                const elapsedMs = date.getTime() - sessionStartTimeAbsolute;
+                const totalSeconds = Math.floor(elapsedMs / 1000);
+                const ms = elapsedMs % 1000;
+                
+                return `${String(totalSeconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+            }
+
+            const opts = TIME_FORMATS[currentTimeFormat].opts;
+            const timeParts = new Intl.DateTimeFormat('ko-KR', opts).formatToParts(date);
+            
+            let formattedString = '';
+            
+            timeParts.forEach(part => {
+                if (['hour', 'minute', 'second', 'fractionalSecond'].includes(part.type)) {
+                    formattedString += part.value;
+                } else if (part.type === 'literal') {
+                    formattedString += part.value;
+                }
+            });
+            return formattedString.replace(/:\s/g, ':');
+        }
+
+        // --- Chart Config ---
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { 
+                        display: true, 
+                        ticks: { autoSkip: true, maxTicksLimit: 7 }, // Optimized Ticks
+                        grid: { display: false }
+                    },
+                    y: { grid: { color: '#f0f0f0' } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // --- Connection ---
+        els.btnConnect.addEventListener('click', async () => {
+            if (!isConnected) {
+                try {
+                    if (!("serial" in navigator)) return alert("Web Serial 미지원 브라우저입니다.");
+                    port = await navigator.serial.requestPort();
+                    await port.open({ baudRate: 115200 });
+                    
+                    isConnected = true;
+                    els.btnConnect.innerHTML = '<i class="fa-solid fa-link-slash"></i> 연결 해제';
+                    els.btnConnect.classList.replace('btn-primary', 'btn-secondary');
+                    els.btnStart.disabled = false;
+                    els.status.innerHTML = '<i class="fa-solid fa-link"></i> 연결됨';
+                    els.status.classList.add('connected');
+                    
+                    if (sessionStartTimeAbsolute === 0) sessionStartTimeAbsolute = Date.now(); 
+                } catch (e) { console.error(e); alert("연결 실패: " + e.message); }
+            } else {
+                // DISCONNECT Logic: Cancel reader and close port
+                if (reader) { await reader.cancel(); await inputDone.catch(() => {}); reader = null; inputDone = null; }
+                if (port) { await port.close(); port = null; }
+                resetState();
+            }
+        });
+
+        // --- Start/Stop (Optimized Serial Flow) ---
+        els.btnStart.addEventListener('click', async () => {
+            if (!isConnected) return;
+            
+            if (!isCollecting) {
+                // START
+                startCount++;
+                els.startCountDisplay.innerText = startCount;
+                
+                isCollecting = true;
+                els.btnStart.innerHTML = '<i class="fa-solid fa-stop"></i> 정지';
+                els.btnStart.classList.replace('btn-secondary', 'btn-primary');
+                els.chartPlaceholder.style.display = 'none';
+                
+                isNavigating = false;
+                els.slider.disabled = true;
+                els.navInfo.innerText = "데이터 수집 중...";
+                
+                currentSessionStart = Date.now();
+                timerInterval = setInterval(updateTimer, 100);
+                
+                if (allData.length > 0) shouldMarkStart = true; 
+                if (sessionStartTimeAbsolute === 0) sessionStartTimeAbsolute = Date.now();
+
+                // Re-start the reading loop
+                readSerialLoop();
+            } else {
+                // STOP (Pause)
+                isCollecting = false; // CRITICAL: Stop processing immediately
+                els.btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 시작';
+                els.btnStart.classList.replace('btn-primary', 'btn-secondary');
+
+                // *** 수정된 부분: 정지 시 마지막 데이터에 '끝' 표시 (빨간색) ***
+                if (allData.length > 0) {
+                    allData[allData.length - 1].isSessionEnd = true;
+                    if (!isNavigating) updateChartRealtime(); // 즉시 빨간점 표시
+                }
+                
+                // CRITICAL FIX: Stop data reception completely (await required)
+                if (reader) { 
+                    await reader.cancel(); 
+                    await inputDone.catch(() => {}); 
+                    reader = null; 
+                    inputDone = null;
+                }
+                
+                clearInterval(timerInterval);
+                accumulatedTime += (Date.now() - currentSessionStart);
+                
+                enableNavigation();
+            }
+        });
+
+        function resetState() {
+            isConnected = isCollecting = false;
+            els.btnConnect.innerHTML = '<i class="fa-solid fa-plug"></i> 연결';
+            els.btnConnect.classList.replace('btn-secondary', 'btn-primary');
+            els.btnStart.disabled = true;
+            els.btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 시작';
+            els.status.innerHTML = '<i class="fa-solid fa-link-slash"></i> 연결 안됨';
+            els.status.classList.remove('connected');
+            els.chartPlaceholder.style.display = 'block';
+            
+            clearInterval(timerInterval);
+            els.timer.innerText = "00:00:00";
+            accumulatedTime = 0;
+            sessionStartTimeAbsolute = 0;
+            
+            dataCounter = 0; allData = []; sensorCount = 0; sensorNames = [];
+            startCount = 0;
+            shouldMarkStart = false;
+            
+            els.startCountDisplay.innerText = "0"; 
+            els.count.innerText = "0";
+            
+            chart.data.datasets = []; chart.update();
+            
+            els.tableBody.innerHTML = '<tr><td colspan="3" class="empty-log"> 기록된 데이터 없음 </td></tr>';
+            els.legend.innerHTML = '';
+            els.slider.disabled = true; els.slider.value = 0;
+            els.navInfo.innerText = "실시간 모드";
+        }
+
+        function updateTimer() {
+            const t = accumulatedTime + (Date.now() - currentSessionStart);
+            const m = Math.floor(t/60000), s = Math.floor((t%60000)/1000), ms = Math.floor((t%1000)/10);
+            els.timer.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(ms).padStart(2,'0')}`;
+        }
+
+        async function readSerialLoop() {
+            const textDecoder = new TextDecoderStream();
+            inputDone = port.readable.pipeTo(textDecoder.writable);
+            reader = textDecoder.readable.getReader();
+            let buffer = "";
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                        buffer += value;
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+                        for (const line of lines) {
+                            if (line.trim() && isCollecting) processData(line.trim());
+                        }
+                    }
+                }
+            } catch (e) { 
+                // Error expected on reader.cancel()
+            } finally { 
+                if (reader) reader.releaseLock();
+            }
+        }
+        
+        // --- PERFORMANCE OPTIMIZATION: Throttling Logic ---
+        function scheduleChartUpdate() {
+            if (throttleTimer) return;
+            throttleTimer = setTimeout(() => {
+                if (!isNavigating) {
+                    updateChartRealtime();
+                }
+                throttleTimer = null;
+            }, THROTTLE_RATE_MS);
+        }
+        // --- END Throttling Logic ---
+
+        function processData(raw) {
+            // CRITICAL FIX: Stop processing immediately upon pause
+            if (!isCollecting) return;
+
+            const vals = raw.split(',').map(v => parseFloat(v.trim()));
+            if (vals.some(isNaN) || vals.length === 0) return;
+
+            if (sensorCount === 0 || sensorCount !== vals.length) {
+                sensorCount = vals.length;
+                initStructure(sensorCount);
+            }
+
+            dataCounter++;
+            const now = new Date();
+            const timeStr = formatTime(now);
+            
+            const rowData = { 
+                id: dataCounter, 
+                time: timeStr, 
+                values: vals, 
+                rawDate: now,
+                // *** 수정된 부분: 시작 지점(파란색) 플래그 설정 ***
+                isSessionStart: shouldMarkStart,
+                isSessionEnd: false
+            };
+            allData.push(rowData);
+
+            if (shouldMarkStart) {
+                shouldMarkStart = false;
+            }
+
+            // CRITICAL FIX: HARD DATA LIMIT (1500)
+            if (allData.length > MAX_DATA_POINTS) {
+                allData.shift(); 
+                if (els.tableBody.lastChild) {
+                    els.tableBody.removeChild(els.tableBody.lastChild); 
+                }
+            }
+
+            els.count.innerText = allData.length;
+            addTableRow(rowData);
+            if (!isNavigating) scheduleChartUpdate(); // Throttled update
+        }
+
+        function initStructure(cnt) {
+            let html = `<tr><th style="width:40px;"><input type="checkbox" id="checkAll"></th><th>시간</th>`;
+            els.legend.innerHTML = '';
+            chart.data.datasets = [];
+            sensorNames = [];
+
+            for(let i=0; i<cnt; i++) {
+                const defName = sensorNames[i] || `센서 ${i+1}`;
+                sensorNames.push(defName);
+                
+                html += `
+                <th>
+                    <input type="text" list="sensorTypes" class="sensor-input" data-index="${i}" 
+                           value="${defName}" onchange="updateSensorMeta(this)" onclick="this.select()">
+                </th>`;
+                
+                const col = colors[i % colors.length];
+                chart.data.datasets.push({
+                    label: defName, data: [],
+                    borderColor: col, backgroundColor: col,
+                    borderWidth: 2, pointRadius: 0, tension: 0.3,
+                    pointRadius: [],
+                    pointBackgroundColor: [],
+                    pointBorderColor: []
+                });
+                
+                updateLegend();
+            }
+            html += `</tr>`;
+            els.tableHead.innerHTML = html;
+            els.tableBody.innerHTML = '';
+
+            document.getElementById('checkAll').addEventListener('change', e => {
+                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
+            });
+        }
+
+        window.updateSensorMeta = function(input) {
+            const idx = parseInt(input.dataset.index);
+            let val = input.value.trim().replace(/\s*\(.*\)/g, '');
+            if(!val) val = `센서 ${idx+1}`;
+            
+            let unit = "";
+            let baseName = val;
+
+            for (const key in unitMap) {
+                if (val.includes(key) && key.length > 1) {
+                    unit = unitMap[key];
+                    break;
+                }
+            }
+            
+            const displayName = unit ? `${baseName} (${unit})` : baseName;
+            
+            sensorNames[idx] = displayName;
+            chart.data.datasets[idx].label = displayName;
+            
+            input.value = displayName;
+            updateLegend();
+            chart.update();
+        }
+
+        function updateLegend() {
+            els.legend.innerHTML = '';
+            sensorNames.forEach((name, i) => {
+                const col = colors[i % colors.length];
+                els.legend.innerHTML += `
+                    <div style="display:flex;align-items:center;gap:5px;font-size:0.9rem;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:${col}"></div> ${name}
+                    </div>`;
+            });
+        }
+
+        function addTableRow(d) {
+            let html = `<td><input type="checkbox" class="row-checkbox" data-id="${d.id}"></td><td>${d.time}</td>`;
+            d.values.forEach(val => html += `<td>${val}</td>`);
+            const tr = document.createElement('tr');
+            tr.innerHTML = html;
+            els.tableBody.prepend(tr);
+        }
+
+        // --- Chart Rendering & Navigation ---
+        function updateChartRealtime() {
+            const win = parseInt(els.xRange.value);
+            const start = Math.max(0, allData.length - win);
+            renderChart(allData.slice(start));
+        }
+
+        function enableNavigation() {
+            isNavigating = true;
+            els.slider.disabled = false;
+            updateSliderRange();
+            els.navInfo.innerText = "슬라이더로 이동하여 탐색";
+        }
+
+        function updateSliderRange() {
+            const win = parseInt(els.xRange.value);
+            const max = Math.max(0, allData.length - win);
+            els.slider.max = max;
+            els.slider.value = max; 
+        }
+
+        els.slider.addEventListener('input', (e) => {
+            if (isCollecting) return;
+            const start = parseInt(e.target.value);
+            const win = parseInt(els.xRange.value);
+            renderChart(allData.slice(start, start + win));
+        });
+
+        function renderChart(viewData) {
+            chart.data.labels = viewData.map(d => d.time);
+
+            for(let i=0; i<sensorCount; i++) {
+                if(chart.data.datasets[i]) {
+                    chart.data.datasets[i].data = viewData.map(d => d.values[i]);
+                    
+                    // *** 수정된 부분: 시작(파랑)/정지(빨강) 점 그리기 로직 ***
+                    chart.data.datasets[i].pointRadius = viewData.map(d => {
+                        if (d.isSessionStart || d.isSessionEnd) return 6; // 시작과 끝점은 크기 6
+                        return 0; // 일반 데이터는 점 없음
+                    });
+                    chart.data.datasets[i].pointBackgroundColor = viewData.map(d => {
+                        if (d.isSessionStart) return '#007bff'; // 시작: 파란색
+                        if (d.isSessionEnd) return '#dc3545';   // 정지: 빨간색
+                        return 'transparent';
+                    });
+                    chart.data.datasets[i].pointBorderColor = viewData.map(d => {
+                        if (d.isSessionStart) return '#007bff';
+                        if (d.isSessionEnd) return '#dc3545';
+                        return 'transparent';
+                    });
+                }
+            }
+            chart.update('none');
+        }
+
+        // --- Time Format Switcher Handler ---
+        function handleTimeFormatChange() {
+            const newFormat = els.timeFormatSelect.value;
+            if (newFormat === currentTimeFormat) return;
+            
+            currentTimeFormat = newFormat;
+
+            // All Data Time Strings must be RE-FORMATTED using the stored rawDate
+            allData.forEach(row => {
+                row.time = formatTime(row.rawDate);
+            });
+            
+            renderTableAll(); 
+            if (!isNavigating) updateChartRealtime();
+            else els.slider.dispatchEvent(new Event('input'));
+        }
+        
+        // Event Listeners for Time and Y-Axis
+        els.timeFormatSelect.addEventListener('change', handleTimeFormatChange);
+        els.yAuto.addEventListener('change', updateYAxis);
+        els.yMin.addEventListener('change', updateYAxis);
+        els.yMax.addEventListener('change', updateYAxis);
+        els.xRange.addEventListener('input', (e) => {
+            els.xVal.innerText = e.target.value;
+            if (isCollecting) updateChartRealtime();
+            else { updateSliderRange(); els.slider.dispatchEvent(new Event('input')); }
+        });
+
+        function updateYAxis() {
+            if(els.yAuto.checked) {
+                els.yStatus.innerText = "자동"; els.yInputs.style.opacity = '0.3'; els.yInputs.style.pointerEvents = 'none';
+                chart.options.scales.y.min = null; chart.options.scales.y.max = null;
+            } else {
+                els.yStatus.innerText = "수동"; els.yInputs.style.opacity = '1'; els.yInputs.style.pointerEvents = 'auto';
+                const min = parseFloat(els.yMin.value), max = parseFloat(els.yMax.value);
+                if(!isNaN(min)) chart.options.scales.y.min = min;
+                if(!isNaN(max)) chart.options.scales.y.max = max;
+            }
+            chart.update();
+        }
+
+        // Download & Delete Logic
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            if (allData.length === 0) return alert("데이터 없음");
+            let csv = "ID,Time," + sensorNames.join(',') + "\r\n";
+            allData.forEach(d => csv += `${d.id},${d.time},${d.values.join(',')}\r\n`);
+            const link = document.createElement("a");
+            link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+            link.download = `DSL_Data_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+            link.click();
+        });
+
+        document.getElementById('btnDeleteSelected').addEventListener('click', () => {
+            const chk = document.querySelectorAll('.row-checkbox:checked');
+            if(chk.length === 0) return alert("선택된 항목 없음");
+            if(!confirm("삭제하시겠습니까?")) return;
+            const ids = Array.from(chk).map(c => parseInt(c.dataset.id));
+            allData = allData.filter(d => !ids.includes(d.id));
+            renderTableAll();
+            if(!isCollecting) { updateSliderRange(); els.slider.dispatchEvent(new Event('input')); }
+            else updateChartRealtime();
+            els.count.innerText = allData.length;
+            document.getElementById('checkAll').checked = false;
+        });
+
+        function renderTableAll() {
+            els.tableBody.innerHTML = '';
+            if(allData.length === 0) els.tableBody.innerHTML = '<tr><td colspan="3" class="empty-log">기록된 데이터 없음</td></tr>';
+            [...allData].forEach(d => addTableRow(d));
+        }
+
+        updateYAxis(); // Initial call
+    </script>
+</body>
+</html>
