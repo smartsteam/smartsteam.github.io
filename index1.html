@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSL - Digital Science Lab (Stop/Start Markers)</title>
+    <title>DSL - Digital Science Lab (High Performance)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -116,6 +116,11 @@
             color: var(--text-gray); width: 80px; text-align: center; cursor: pointer;
         }
         .sensor-input:hover, .sensor-input:focus { border: 1px solid #ddd; background: white; outline: none; border-radius: 4px; }
+        
+        /* 알림 메시지 (데이터 표시 제한 등) */
+        .table-note {
+            font-size: 0.8rem; color: #888; text-align: center; padding: 5px; background: #fff3cd; color: #856404; display:none;
+        }
 
         @media (max-width: 1024px) {
             .main-container { flex-direction: column; overflow-y: auto; }
@@ -216,6 +221,7 @@
                         <i class="fa-solid fa-trash-can" id="btnDeleteSelected" title="선택 삭제" style="color:var(--danger-red)"></i>
                     </div>
                 </div>
+                <div id="tableNote" class="table-note">🚀 성능 최적화를 위해 최근 50개만 표시 중... (정지 시 전체 표시)</div>
                 <div class="table-wrapper">
                     <table>
                         <thead id="tableHead">
@@ -253,8 +259,10 @@
 
     <script>
         // --- CONSTANTS & Variables ---
-        const MAX_DATA_POINTS = 1500; // 최대 수집 데이터 갯수 제한
-        const THROTTLE_RATE_MS = 150; // 차트 갱신 주기 (성능 최적화)
+        const MAX_DATA_POINTS = 1500; // 최대 저장 데이터 수
+        const MAX_TABLE_ROWS_LIVE = 50; // [렉 방지 핵심] 수집 중 표에 표시할 최대 행 수
+        const CHART_THROTTLE_MS = 200; // 차트 업데이트 주기
+        const TABLE_UPDATE_MS = 300;   // 테이블 업데이트 주기
         
         let port, reader, inputDone;
         let isConnected = false, isCollecting = false;
@@ -265,13 +273,16 @@
         let sessionStartTimeAbsolute = 0; 
         let startCount = 0;
         let throttleTimer = null; 
+        
+        // 데이터 버퍼
+        let tableUpdateInterval = null;
 
         // Start/Stop marker flags
         let shouldMarkStart = false;
 
         const colors = ['#007bff', '#6f42c1', '#28a745', '#dc3545', '#ffc107', '#17a2b8'];
 
-        // Time Format Definitions
+        // Time Format
         const TIME_FORMATS = {
             'H_M_S': { label: '시:분:초', opts: { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false } },
             'H_M_S_MS': { label: '시:분:초:밀리초', opts: { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3, hour12: false } },
@@ -280,12 +291,7 @@
             'S_MS': { label: '초:밀리초 (경과 시간)', custom: true }
         };
         let currentTimeFormat = 'H_M_S';
-
-        // Unit Mapping
-        const unitMap = {
-            '온도': '°C', '습도': '%', '조도': 'lx', '전압': 'V', '전류': 'A',
-            '기압': 'hPa', '소리': 'dB', '거리': 'cm', 'pH': ''
-        };
+        const unitMap = { '온도': '°C', '습도': '%', '조도': 'lx', '전압': 'V', '전류': 'A', '기압': 'hPa', '소리': 'dB', '거리': 'cm', 'pH': '' };
 
         // --- DOM Elements ---
         const els = {
@@ -298,6 +304,7 @@
             startCountDisplay: document.getElementById('startCountDisplay'),
             tableBody: document.getElementById('tableBody'),
             tableHead: document.getElementById('tableHead'),
+            tableNote: document.getElementById('tableNote'),
             legend: document.getElementById('sensorLegend'),
             timeFormatSelect: document.getElementById('timeFormatSelect'),
             xRange: document.getElementById('xRange'),
@@ -311,54 +318,32 @@
             yMax: document.getElementById('yMax')
         };
 
-        // --- Time Formatting Function ---
+        // --- Helper Functions ---
         function formatTime(date) {
             if (currentTimeFormat === 'S_MS') {
                 if (sessionStartTimeAbsolute === 0) return '00.000';
-                
                 const elapsedMs = date.getTime() - sessionStartTimeAbsolute;
                 const totalSeconds = Math.floor(elapsedMs / 1000);
                 const ms = elapsedMs % 1000;
-                
                 return `${String(totalSeconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
             }
-
             const opts = TIME_FORMATS[currentTimeFormat].opts;
-            const timeParts = new Intl.DateTimeFormat('ko-KR', opts).formatToParts(date);
-            
-            let formattedString = '';
-            
-            timeParts.forEach(part => {
-                if (['hour', 'minute', 'second', 'fractionalSecond'].includes(part.type)) {
-                    formattedString += part.value;
-                } else if (part.type === 'literal') {
-                    formattedString += part.value;
-                }
-            });
-            return formattedString.replace(/:\s/g, ':');
+            return new Intl.DateTimeFormat('ko-KR', opts).format(date).replace(/:\s/g, ':');
         }
 
-        // --- Chart Config ---
+        // --- Chart ---
         const ctx = document.getElementById('sensorChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
             data: { labels: [], datasets: [] },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
+                responsive: true, maintainAspectRatio: false, animation: false,
                 interaction: { mode: 'index', intersect: false },
                 scales: {
-                    x: { 
-                        display: true, 
-                        ticks: { autoSkip: true, maxTicksLimit: 7 }, // Optimized Ticks
-                        grid: { display: false }
-                    },
+                    x: { display: true, ticks: { autoSkip: true, maxTicksLimit: 7 }, grid: { display: false } },
                     y: { grid: { color: '#f0f0f0' } }
                 },
-                plugins: {
-                    legend: { display: false }
-                }
+                plugins: { legend: { display: false } }
             }
         });
 
@@ -376,69 +361,82 @@
                     els.btnStart.disabled = false;
                     els.status.innerHTML = '<i class="fa-solid fa-link"></i> 연결됨';
                     els.status.classList.add('connected');
-                    
                     if (sessionStartTimeAbsolute === 0) sessionStartTimeAbsolute = Date.now(); 
                 } catch (e) { console.error(e); alert("연결 실패: " + e.message); }
             } else {
-                // DISCONNECT Logic: Cancel reader and close port
-                if (reader) { await reader.cancel(); await inputDone.catch(() => {}); reader = null; inputDone = null; }
+                await forceStop(); // 안전하게 정지 후 해제
                 if (port) { await port.close(); port = null; }
                 resetState();
             }
         });
 
-        // --- Start/Stop (Optimized Serial Flow) ---
+        // --- Start/Stop Logic (개선됨) ---
         els.btnStart.addEventListener('click', async () => {
             if (!isConnected) return;
             
             if (!isCollecting) {
                 // START
-                startCount++;
-                els.startCountDisplay.innerText = startCount;
-                
                 isCollecting = true;
+                startCount++; els.startCountDisplay.innerText = startCount;
+                
                 els.btnStart.innerHTML = '<i class="fa-solid fa-stop"></i> 정지';
                 els.btnStart.classList.replace('btn-secondary', 'btn-primary');
                 els.chartPlaceholder.style.display = 'none';
+                els.tableNote.style.display = 'block'; // 알림 표시
                 
-                isNavigating = false;
-                els.slider.disabled = true;
-                els.navInfo.innerText = "데이터 수집 중...";
-                
+                isNavigating = false; els.slider.disabled = true; els.navInfo.innerText = "데이터 수집 중...";
                 currentSessionStart = Date.now();
+                
+                // 기존 타이머 클리어
+                if(timerInterval) clearInterval(timerInterval);
+                if(tableUpdateInterval) clearInterval(tableUpdateInterval);
+
                 timerInterval = setInterval(updateTimer, 100);
+                tableUpdateInterval = setInterval(updateTableLive, TABLE_UPDATE_MS); // 주기적 테이블 업데이트
                 
                 if (allData.length > 0) shouldMarkStart = true; 
                 if (sessionStartTimeAbsolute === 0) sessionStartTimeAbsolute = Date.now();
 
-                // Re-start the reading loop
                 readSerialLoop();
             } else {
-                // STOP (Pause)
-                isCollecting = false; // CRITICAL: Stop processing immediately
-                els.btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 시작';
-                els.btnStart.classList.replace('btn-primary', 'btn-secondary');
-
-                // *** 수정된 부분: 정지 시 마지막 데이터에 '끝' 표시 (빨간색) ***
-                if (allData.length > 0) {
-                    allData[allData.length - 1].isSessionEnd = true;
-                    if (!isNavigating) updateChartRealtime(); // 즉시 빨간점 표시
-                }
-                
-                // CRITICAL FIX: Stop data reception completely (await required)
-                if (reader) { 
-                    await reader.cancel(); 
-                    await inputDone.catch(() => {}); 
-                    reader = null; 
-                    inputDone = null;
-                }
-                
-                clearInterval(timerInterval);
-                accumulatedTime += (Date.now() - currentSessionStart);
-                
-                enableNavigation();
+                // STOP
+                await forceStop();
             }
         });
+
+        async function forceStop() {
+            // 1. 상태 플래그 즉시 변경 (루프 중단용)
+            isCollecting = false;
+            
+            // 2. 타이머 즉시 제거 (UI 흐름 방지)
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            if (tableUpdateInterval) { clearInterval(tableUpdateInterval); tableUpdateInterval = null; }
+
+            // 3. UI 업데이트
+            els.btnStart.innerHTML = '<i class="fa-solid fa-play"></i> 시작';
+            els.btnStart.classList.replace('btn-primary', 'btn-secondary');
+            els.tableNote.style.display = 'none';
+
+            // 4. 마지막 데이터 처리 (빨간 점)
+            if (allData.length > 0) {
+                allData[allData.length - 1].isSessionEnd = true;
+                if (!isNavigating) updateChartRealtime();
+            }
+
+            // 5. 시리얼 리더 취소
+            if (reader) { 
+                try { await reader.cancel(); } catch(e){}
+                await inputDone.catch(() => {});
+                reader = null; inputDone = null;
+            }
+
+            // 6. 누적 시간 저장
+            if (currentSessionStart > 0) accumulatedTime += (Date.now() - currentSessionStart);
+            
+            // 7. [중요] 전체 데이터 테이블에 렌더링 (리뷰 모드)
+            renderTableFull(); 
+            enableNavigation();
+        }
 
         function resetState() {
             isConnected = isCollecting = false;
@@ -449,21 +447,20 @@
             els.status.innerHTML = '<i class="fa-solid fa-link-slash"></i> 연결 안됨';
             els.status.classList.remove('connected');
             els.chartPlaceholder.style.display = 'block';
+            els.tableNote.style.display = 'none';
             
-            clearInterval(timerInterval);
+            if(timerInterval) clearInterval(timerInterval);
+            if(tableUpdateInterval) clearInterval(tableUpdateInterval);
             els.timer.innerText = "00:00:00";
-            accumulatedTime = 0;
-            sessionStartTimeAbsolute = 0;
+            accumulatedTime = 0; sessionStartTimeAbsolute = 0;
             
             dataCounter = 0; allData = []; sensorCount = 0; sensorNames = [];
-            startCount = 0;
-            shouldMarkStart = false;
+            startCount = 0; shouldMarkStart = false;
             
             els.startCountDisplay.innerText = "0"; 
             els.count.innerText = "0";
             
             chart.data.datasets = []; chart.update();
-            
             els.tableBody.innerHTML = '<tr><td colspan="3" class="empty-log"> 기록된 데이터 없음 </td></tr>';
             els.legend.innerHTML = '';
             els.slider.disabled = true; els.slider.value = 0;
@@ -471,6 +468,7 @@
         }
 
         function updateTimer() {
+            if(!isCollecting) return; // 이중 안전장치
             const t = accumulatedTime + (Date.now() - currentSessionStart);
             const m = Math.floor(t/60000), s = Math.floor((t%60000)/1000), ms = Math.floor((t%1000)/10);
             els.timer.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(ms).padStart(2,'0')}`;
@@ -484,39 +482,22 @@
             try {
                 while (true) {
                     const { value, done } = await reader.read();
-                    if (done) break;
+                    if (done || !isCollecting) break; // 즉시 탈출
                     if (value) {
                         buffer += value;
                         const lines = buffer.split('\n');
                         buffer = lines.pop();
                         for (const line of lines) {
-                            if (line.trim() && isCollecting) processData(line.trim());
+                            if (!isCollecting) break;
+                            if (line.trim()) processData(line.trim());
                         }
                     }
                 }
-            } catch (e) { 
-                // Error expected on reader.cancel()
-            } finally { 
-                if (reader) reader.releaseLock();
-            }
+            } catch (e) {} finally { if (reader) reader.releaseLock(); }
         }
         
-        // --- PERFORMANCE OPTIMIZATION: Throttling Logic ---
-        function scheduleChartUpdate() {
-            if (throttleTimer) return;
-            throttleTimer = setTimeout(() => {
-                if (!isNavigating) {
-                    updateChartRealtime();
-                }
-                throttleTimer = null;
-            }, THROTTLE_RATE_MS);
-        }
-        // --- END Throttling Logic ---
-
+        // --- Data Processing ---
         function processData(raw) {
-            // CRITICAL FIX: Stop processing immediately upon pause
-            if (!isCollecting) return;
-
             const vals = raw.split(',').map(v => parseFloat(v.trim()));
             if (vals.some(isNaN) || vals.length === 0) return;
 
@@ -530,33 +511,65 @@
             const timeStr = formatTime(now);
             
             const rowData = { 
-                id: dataCounter, 
-                time: timeStr, 
-                values: vals, 
-                rawDate: now,
-                // *** 수정된 부분: 시작 지점(파란색) 플래그 설정 ***
-                isSessionStart: shouldMarkStart,
-                isSessionEnd: false
+                id: dataCounter, time: timeStr, values: vals, rawDate: now,
+                isSessionStart: shouldMarkStart, isSessionEnd: false
             };
+            
             allData.push(rowData);
+            if (shouldMarkStart) shouldMarkStart = false;
 
-            if (shouldMarkStart) {
-                shouldMarkStart = false;
-            }
-
-            // CRITICAL FIX: HARD DATA LIMIT (1500)
-            if (allData.length > MAX_DATA_POINTS) {
-                allData.shift(); 
-                if (els.tableBody.lastChild) {
-                    els.tableBody.removeChild(els.tableBody.lastChild); 
-                }
-            }
+            // 데이터 제한 (오래된 것 삭제)
+            if (allData.length > MAX_DATA_POINTS) allData.shift();
 
             els.count.innerText = allData.length;
-            addTableRow(rowData);
-            if (!isNavigating) scheduleChartUpdate(); // Throttled update
+            
+            // 차트는 스로틀링 적용하여 업데이트
+            if (!isNavigating) scheduleChartUpdate(); 
         }
 
+        function scheduleChartUpdate() {
+            if (throttleTimer) return;
+            throttleTimer = setTimeout(() => {
+                if (!isNavigating && isCollecting) updateChartRealtime();
+                throttleTimer = null;
+            }, CHART_THROTTLE_MS);
+        }
+
+        // --- Table Rendering (최적화) ---
+        function updateTableLive() {
+            if (!isCollecting) return;
+            // 라이브 모드에서는 최근 데이터만 렌더링하여 렉 방지
+            const recentData = allData.slice(-MAX_TABLE_ROWS_LIVE).reverse();
+            renderTableData(recentData);
+        }
+
+        function renderTableFull() {
+            // 정지 시 전체 데이터 렌더링
+            renderTableData([...allData].reverse());
+        }
+
+        function renderTableData(dataArray) {
+            // DocumentFragment 사용으로 리플로우 1회로 제한
+            const fragment = document.createDocumentFragment();
+            
+            if (dataArray.length === 0) {
+                els.tableBody.innerHTML = '<tr><td colspan="3" class="empty-log">기록된 데이터 없음</td></tr>';
+                return;
+            }
+
+            dataArray.forEach(d => {
+                const tr = document.createElement('tr');
+                let html = `<td><input type="checkbox" class="row-checkbox" data-id="${d.id}"></td><td>${d.time}</td>`;
+                d.values.forEach(val => html += `<td>${val}</td>`);
+                tr.innerHTML = html;
+                fragment.appendChild(tr);
+            });
+            
+            els.tableBody.innerHTML = '';
+            els.tableBody.appendChild(fragment);
+        }
+
+        // --- ETC (Init, Chart Update, etc) ---
         function initStructure(cnt) {
             let html = `<tr><th style="width:40px;"><input type="checkbox" id="checkAll"></th><th>시간</th>`;
             els.legend.innerHTML = '';
@@ -566,23 +579,13 @@
             for(let i=0; i<cnt; i++) {
                 const defName = sensorNames[i] || `센서 ${i+1}`;
                 sensorNames.push(defName);
-                
-                html += `
-                <th>
-                    <input type="text" list="sensorTypes" class="sensor-input" data-index="${i}" 
-                           value="${defName}" onchange="updateSensorMeta(this)" onclick="this.select()">
-                </th>`;
-                
+                html += `<th><input type="text" list="sensorTypes" class="sensor-input" data-index="${i}" value="${defName}" onchange="updateSensorMeta(this)" onclick="this.select()"></th>`;
                 const col = colors[i % colors.length];
                 chart.data.datasets.push({
-                    label: defName, data: [],
-                    borderColor: col, backgroundColor: col,
+                    label: defName, data: [], borderColor: col, backgroundColor: col,
                     borderWidth: 2, pointRadius: 0, tension: 0.3,
-                    pointRadius: [],
-                    pointBackgroundColor: [],
-                    pointBorderColor: []
+                    pointRadius: [], pointBackgroundColor: [], pointBorderColor: []
                 });
-                
                 updateLegend();
             }
             html += `</tr>`;
@@ -598,22 +601,13 @@
             const idx = parseInt(input.dataset.index);
             let val = input.value.trim().replace(/\s*\(.*\)/g, '');
             if(!val) val = `센서 ${idx+1}`;
-            
-            let unit = "";
-            let baseName = val;
-
+            let unit = ""; let baseName = val;
             for (const key in unitMap) {
-                if (val.includes(key) && key.length > 1) {
-                    unit = unitMap[key];
-                    break;
-                }
+                if (val.includes(key) && key.length > 1) { unit = unitMap[key]; break; }
             }
-            
             const displayName = unit ? `${baseName} (${unit})` : baseName;
-            
             sensorNames[idx] = displayName;
             chart.data.datasets[idx].label = displayName;
-            
             input.value = displayName;
             updateLegend();
             chart.update();
@@ -623,22 +617,10 @@
             els.legend.innerHTML = '';
             sensorNames.forEach((name, i) => {
                 const col = colors[i % colors.length];
-                els.legend.innerHTML += `
-                    <div style="display:flex;align-items:center;gap:5px;font-size:0.9rem;">
-                        <div style="width:10px;height:10px;border-radius:50%;background:${col}"></div> ${name}
-                    </div>`;
+                els.legend.innerHTML += `<div style="display:flex;align-items:center;gap:5px;font-size:0.9rem;"><div style="width:10px;height:10px;border-radius:50%;background:${col}"></div> ${name}</div>`;
             });
         }
 
-        function addTableRow(d) {
-            let html = `<td><input type="checkbox" class="row-checkbox" data-id="${d.id}"></td><td>${d.time}</td>`;
-            d.values.forEach(val => html += `<td>${val}</td>`);
-            const tr = document.createElement('tr');
-            tr.innerHTML = html;
-            els.tableBody.prepend(tr);
-        }
-
-        // --- Chart Rendering & Navigation ---
         function updateChartRealtime() {
             const win = parseInt(els.xRange.value);
             const start = Math.max(0, allData.length - win);
@@ -668,49 +650,30 @@
 
         function renderChart(viewData) {
             chart.data.labels = viewData.map(d => d.time);
-
             for(let i=0; i<sensorCount; i++) {
                 if(chart.data.datasets[i]) {
                     chart.data.datasets[i].data = viewData.map(d => d.values[i]);
-                    
-                    // *** 수정된 부분: 시작(파랑)/정지(빨강) 점 그리기 로직 ***
-                    chart.data.datasets[i].pointRadius = viewData.map(d => {
-                        if (d.isSessionStart || d.isSessionEnd) return 6; // 시작과 끝점은 크기 6
-                        return 0; // 일반 데이터는 점 없음
-                    });
-                    chart.data.datasets[i].pointBackgroundColor = viewData.map(d => {
-                        if (d.isSessionStart) return '#007bff'; // 시작: 파란색
-                        if (d.isSessionEnd) return '#dc3545';   // 정지: 빨간색
-                        return 'transparent';
-                    });
-                    chart.data.datasets[i].pointBorderColor = viewData.map(d => {
-                        if (d.isSessionStart) return '#007bff';
-                        if (d.isSessionEnd) return '#dc3545';
-                        return 'transparent';
-                    });
+                    chart.data.datasets[i].pointRadius = viewData.map(d => (d.isSessionStart || d.isSessionEnd) ? 6 : 0);
+                    chart.data.datasets[i].pointBackgroundColor = viewData.map(d => d.isSessionStart ? '#007bff' : (d.isSessionEnd ? '#dc3545' : 'transparent'));
+                    chart.data.datasets[i].pointBorderColor = viewData.map(d => d.isSessionStart ? '#007bff' : (d.isSessionEnd ? '#dc3545' : 'transparent'));
                 }
             }
             chart.update('none');
         }
 
-        // --- Time Format Switcher Handler ---
         function handleTimeFormatChange() {
             const newFormat = els.timeFormatSelect.value;
             if (newFormat === currentTimeFormat) return;
-            
             currentTimeFormat = newFormat;
-
-            // All Data Time Strings must be RE-FORMATTED using the stored rawDate
-            allData.forEach(row => {
-                row.time = formatTime(row.rawDate);
-            });
+            allData.forEach(row => { row.time = formatTime(row.rawDate); });
             
-            renderTableAll(); 
+            if (isCollecting) updateTableLive();
+            else renderTableFull();
+            
             if (!isNavigating) updateChartRealtime();
             else els.slider.dispatchEvent(new Event('input'));
         }
         
-        // Event Listeners for Time and Y-Axis
         els.timeFormatSelect.addEventListener('change', handleTimeFormatChange);
         els.yAuto.addEventListener('change', updateYAxis);
         els.yMin.addEventListener('change', updateYAxis);
@@ -734,7 +697,6 @@
             chart.update();
         }
 
-        // Download & Delete Logic
         document.getElementById('btnDownload').addEventListener('click', () => {
             if (allData.length === 0) return alert("데이터 없음");
             let csv = "ID,Time," + sensorNames.join(',') + "\r\n";
@@ -751,20 +713,18 @@
             if(!confirm("삭제하시겠습니까?")) return;
             const ids = Array.from(chk).map(c => parseInt(c.dataset.id));
             allData = allData.filter(d => !ids.includes(d.id));
-            renderTableAll();
+            
+            if (isCollecting) updateTableLive();
+            else renderTableFull();
+
             if(!isCollecting) { updateSliderRange(); els.slider.dispatchEvent(new Event('input')); }
             else updateChartRealtime();
+            
             els.count.innerText = allData.length;
             document.getElementById('checkAll').checked = false;
         });
 
-        function renderTableAll() {
-            els.tableBody.innerHTML = '';
-            if(allData.length === 0) els.tableBody.innerHTML = '<tr><td colspan="3" class="empty-log">기록된 데이터 없음</td></tr>';
-            [...allData].forEach(d => addTableRow(d));
-        }
-
-        updateYAxis(); // Initial call
+        updateYAxis(); 
     </script>
 </body>
 </html>
